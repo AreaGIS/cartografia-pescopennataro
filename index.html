@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cartografia Pescopennataro</title>
 
-    <!-- Fogli di stile CSS di Leaflet e Bootstrap -->
-    <link rel="stylesheet" href="https://jsdelivr.net" />
+    <!-- Collegamenti CSS Ufficiali e Stabili -->
+    <link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://jsdelivr.net" />
     <link rel="stylesheet" href="https://cloudflare.com" />
 
@@ -21,7 +21,6 @@
         .leaflet-container {
             font-size: 13px;
         }
-        /* Personalizzazione minimale del popup */
         .custom-popup-title {
             margin: 0 0 5px 0;
             color: #1b5e20;
@@ -35,16 +34,15 @@
 
     <div id="map"></div>
 
-    <!-- Script JS di supporto, Leaflet e jQuery -->
+    <!-- Script JS Ufficiali e Stabili -->
     <script src="https://jquery.com"></script>
     <script src="https://jsdelivr.net"></script>
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
         // ============================================================
         // 1. INIZIALIZZAZIONE DELLA MAPPA E SFONDI (BASE LAYERS)
         // ============================================================
-        // Centrato sul Bosco degli Abeti Soprani a Pescopennataro
         var map = L.map('map').setView([41.871, 14.292], 14);
 
         var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -52,7 +50,7 @@
         }).addTo(map);
 
         var satellite = L.tileLayer('https://arcgisonline.com{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            attribution: 'Tiles &copy; Esri'
         });
 
         var baseMaps = {
@@ -63,7 +61,6 @@
         // ============================================================
         // 2. CONFIGURAZIONE DEI FILTRI / STRATI GEOJSON (OVERLAYS)
         // ============================================================
-        // Elenco strutturato di tutti i tuoi file ambientali estratti da QGIS
         const configurazioneLayer = [
             { nome: "Abetine Appenniniche", file: "Abetine dell'Appennino centrale e meridionale.geojson", colore: "#1b5e20" },
             { nome: "Boschi di Conifere", file: "Boschi di conifere aloctone o fuori dal loro areale.geojson", colore: "#2e7d32" },
@@ -73,9 +70,9 @@
             { nome: "Faggete Meridionali", file: "Faggete dell'Italia meridionale.geojson", colore: "#8d6e63" },
             { nome: "Ginepreti", file: "Ginepreti collinari e montani.geojson", colore: "#a1887f" },
             { nome: "Querceti a Cerro", file: "Querceti temperati a cerro.geojson", colore: "#ff9800" },
-            { nome: "Praterie da sfalcio", file: "Praterie da sfalcio parzialmente coltivate.geojson", colore: "#d4e157" },
+            { nome: "Praterie da sfalcio", file: "Praterie da sfalcio planiziali, collinari e montane.geojson", colore: "#d4e157" },
             { nome: "Praterie mesofile", file: "Praterie mesofile pascolate.geojson", colore: "#cddc39" },
-            { nome: "Praterie xero-mesofile", file: "Praterie xero-mesofile temperate e submediterranee.geojson", colore: "#afb42b" },
+            { nome: "Praterie xero-mesofile", file: "Praterie mesiche temperate e submediterranee.geojson", colore: "#afb42b" },
             { nome: "Praterie xeriche", file: "Praterie xeriche dell'Italia centrale e meridionale.geojson", colore: "#9e9d24" },
             { nome: "Cespuglieti temperati", file: "Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson", colore: "#81c784" },
             { nome: "Colture estensive", file: "Colture estensive.geojson", colore: "#fff59d" },
@@ -84,10 +81,7 @@
             { nome: "Siti produttivi", file: "Siti produttivi, commerciali e grandi impianti.geojson", colore: "#37474f" }
         ];
 
-        // Oggetto che conterrà i gruppi per la legenda di Leaflet
         const overlayMaps = {};
-
-        // Inizializza il controllo dei layer (Legenda) sulla mappa
         const controlloLayer = L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
         // ============================================================
@@ -113,13 +107,9 @@
         // 4. CICLO ITERATIVO DI CARICAMENTO DEI FILE GEOJSON
         // ============================================================
         configurazioneLayer.forEach(strato => {
-            // Crea un contenitore grafico per il layer specifico
             const gruppoLayer = L.layerGroup();
-            
-            // Aggiunge la voce dinamicamente alla legenda
             controlloLayer.addOverlay(gruppoLayer, strato.nome);
 
-            // Carica in modo asincrono il file GeoJSON dalla root del repository
             fetch(`./${strato.file}`)
                 .then(response => {
                     if (!response.ok) throw new Error(`Impossibile leggere il file ${strato.file}`);
@@ -128,10 +118,10 @@
                 .then(data => {
                     L.geoJSON(data, {
                         style: {
-                            color: strato.colore,      // Colore del contorno del poligono
-                            fillColor: strato.colore,  // Colore del riempimento
-                            weight: 1.5,               // Spessore della linea esterna
-                            fillOpacity: 0.35          // Trasparenza dell'area interna
+                            color: strato.colore,
+                            fillColor: strato.colore,
+                            weight: 1.5,
+                            fillOpacity: 0.35
                         },
                         onEachFeature: popUpGenerico
                     }).addTo(gruppoLayer);
@@ -140,15 +130,6 @@
                     console.error(`Errore nel caricamento del file: ${strato.file}`, error);
                 });
         });
-
-        // Ad esempio, rendiamo attive le Abetine subito all'avvio della mappa per non mostrare lo schermo vuoto
-        // Nota: i dati compariranno non appena la chiamata asincrona fetch() sarà completata.
-        setTimeout(() => {
-            map.eachLayer(function(layer) {
-                // Cerchiamo il controllo per attivarlo graficamente se necessario
-            });
-        }, 500);
-
     </script>
 </body>
 </html>
