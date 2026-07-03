@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cartografia Pescopennataro</title>
 
-    <!-- Collegamento al file CSS locale -->
-    <link rel="stylesheet" href="./leaflet.css" />
+    ./leaflet.css
 
     <style>
         html, body, #map {
@@ -16,6 +15,7 @@
             padding: 0;
             background-color: #f8f9fa;
         }
+
         .custom-popup-title {
             margin: 0 0 5px 0;
             color: #1b5e20;
@@ -27,92 +27,153 @@
 </head>
 <body>
 
-    <div id="map"></div>
+<div id="map"></div>
 
-    <!-- Collegamento al file JS locale -->
-    <script type="module" src="./leaflet.js"></script>S
+./leaflet.js
 
-    <script>
-        // 1. Inizializzazione mappa centrata su Pescopennataro
-        var map = L.map('map').setView([41.871, 14.292], 14);
+<script>
 
-        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Mappa centrata su Pescopennataro
+    var map = L.map('map').setView([41.871, 14.292], 14);
+
+    // Base map OpenStreetMap
+    var osm = L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
             attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        var satellite = L.tileLayer('https://arcgisonline.com{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri'
-        });
-
-        var baseMaps = {
-            "OpenStreetMap": osm,
-            "Satellite": satellite
-        };
-
-        // 2. Elenco layer GeoJSON presenti nel tuo repository
-        const configurazioneLayer = [
-            { nome: "Abetine Appenniniche", file: "Abetine dell'Appennino centrale e meridionale.geojson", colore: "#1b5e20" },
-            { nome: "Boschi di Conifere", file: "Boschi di conifere aloctone o fuori dal loro areale.geojson", colore: "#2e7d32" },
-            { nome: "Boschi di Ostrya", file: "Boschi di Ostrya carpinifolia.geojson", colore: "#4caf50" },
-            { nome: "Pioppeti Ripariali", file: "Boschi ripariali a pioppo.geojson", colore: "#00796b" },
-            { nome: "Saliceti Temperati", file: "Boschi ripariali temperati di salici.geojson", colore: "#009688" },
-            { nome: "Faggete Meridionali", file: "Faggete dell'Italia meridionale.geojson", colore: "#8d6e63" },
-            { nome: "Ginepreti", file: "Ginepreti collinari e montani.geojson", colore: "#a1887f" },
-            { nome: "Querceti a Cerro", file: "Querceti temperati a cerro.geojson", colore: "#ff9800" },
-            { nome: "Praterie da sfalcio", file: "Praterie da sfalcio planiziali, collinari e montane.geojson", colore: "#d4e157" },
-            { nome: "Praterie mesofile", file: "Praterie mesofile pascolate.geojson", colore: "#cddc39" },
-            { nome: "Praterie xero-mesofile", file: "Praterie mesiche temperate e submediterranee.geojson", colore: "#afb42b" },
-            { nome: "Praterie xeriche", file: "Praterie xeriche dell'Italia centrale e meridionale.geojson", colore: "#9e9d24" },
-            { nome: "Cespuglieti temperati", file: "Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson", colore: "#81c784" },
-            { nome: "Colture estensive", file: "Colture estensive.geojson", colore: "#fff59d" },
-            { nome: "Rupi carbonatiche", file: "Rupi carbonatiche dei rilievi dell'Appennino centro-meridionale.geojson", colore: "#b0bec5" },
-            { nome: "Centri Abitati", file: "Centri habitati e infrastrutture viarie e ferroviarie.geojson", colore: "#757575" },
-            { nome: "Siti produttivi", file: "Siti produttivi, commerciali e grandi impianti.geojson", colore: "#37474f" }
-        ];
-
-        const overlayMaps = {};
-        const controlloLayer = L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
-        // 3. Popup per i poligoni
-        function popUpGenerico(feature, layer) {
-            if (feature.properties) {
-                let contenuto = `
-                    <div style="line-height: 1.5;">
-                        <h5 class="custom-popup-title">${feature.properties.nomeclasse || "Unità Cartografica"}</h5>
-                        <b>Estensione:</b> ${feature.properties.ettari ? parseFloat(feature.properties.ettari).toFixed(2) : "N/D"} ha<br>
-                        <b>Valore Ecologico (VE):</b> ${feature.properties.classe_ve || "N/D"}<br>
-                        <b>Valore Strutturale (SE):</b> ${feature.properties.classe_se || "N/D"}<br>
-                        <b>Valore Faunistico (FG):</b> ${feature.properties.classe_fg || "N/D"}
-                    </div>`;
-                layer.bindPopup(contenuto);
-            }
         }
+    ).addTo(map);
 
-        // 4. Caricamento automatico
-        configurazioneLayer.forEach(strato => {
-            const gruppoLayer = L.layerGroup();
-            controlloLayer.addOverlay(gruppoLayer, strato.nome);
+    // Base map Satellite Esri
+    var satellite = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+            attribution: 'Tiles &copy; Esri'
+        }
+    );
 
-            fetch(`./${strato.file}`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`Impossibile leggere il file ${strato.file}`);
-                    return response.json();
-                })
-                .then(data => {
-                    L.geoJSON(data, {
-                        style: {
-                            color: strato.colore,
-                            fillColor: strato.colore,
-                            weight: 1.5,
-                            fillOpacity: 0.35
-                        },
-                        onEachFeature: popUpGenerico
-                    }).addTo(gruppoLayer);
-                })
-                .catch(error => {
-                    console.error(`Errore nel caricamento del file: ${strato.file}`, error);
+    var baseMaps = {
+        "OpenStreetMap": osm,
+        "Satellite": satellite
+    };
+
+    // Elenco layer GeoJSON
+    const configurazioneLayer = [
+        { nome: "Abetine Appenniniche", file: "Abetine dell'Appennino centrale e meridionale.geojson", colore: "#1b5e20" },
+        { nome: "Boschi di Conifere", file: "Boschi di conifere aloctone o fuori dal loro areale.geojson", colore: "#2e7d32" },
+        { nome: "Boschi di Ostrya", file: "Boschi di Ostrya carpinifolia.geojson", colore: "#4caf50" },
+        { nome: "Pioppeti Ripariali", file: "Boschi ripariali a pioppo.geojson", colore: "#00796b" },
+        { nome: "Saliceti Temperati", file: "Boschi ripariali temperati di salici.geojson", colore: "#009688" },
+        { nome: "Faggete Meridionali", file: "Faggete dell'Italia meridionale.geojson", colore: "#8d6e63" },
+        { nome: "Ginepreti", file: "Ginepreti collinari e montani.geojson", colore: "#a1887f" },
+        { nome: "Querceti a Cerro", file: "Querceti temperati a cerro.geojson", colore: "#ff9800" },
+        { nome: "Praterie da sfalcio", file: "Praterie da sfalcio planiziali, collinari e montane.geojson", colore: "#d4e157" },
+        { nome: "Praterie mesofile", file: "Praterie mesofile pascolate.geojson", colore: "#cddc39" },
+        { nome: "Praterie xero-mesofile", file: "Praterie mesiche temperate e submediterranee.geojson", colore: "#afb42b" },
+        { nome: "Praterie xeriche", file: "Praterie xeriche dell'Italia centrale e meridionale.geojson", colore: "#9e9d24" },
+        { nome: "Cespuglieti temperati", file: "Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson", colore: "#81c784" },
+        { nome: "Colture estensive", file: "Colture estensive.geojson", colore: "#fff59d" },
+        { nome: "Rupi carbonatiche", file: "Rupi carbonatiche dei rilievi dell'Appennino centro-meridionale.geojson", colore: "#b0bec5" },
+        { nome: "Centri Abitati", file: "Centri habitati e infrastrutture viarie e ferroviarie.geojson", colore: "#757575" },
+        { nome: "Siti produttivi", file: "Siti produttivi, commerciali e grandi impianti.geojson", colore: "#37474f" }
+    ];
+
+    const overlayMaps = {};
+
+    const controlloLayer = L.control.layers(
+        baseMaps,
+        overlayMaps,
+        {
+            collapsed: false,
+            position: 'topright'
+        }
+    ).addTo(map);
+
+    function valore(v) {
+        return (v !== null && v !== undefined && v !== '') ? v : 'N/D';
+    }
+
+    function popUpGenerico(feature, layer) {
+
+        if (!feature.properties) return;
+
+        let contenuto = `
+            <div style="line-height:1.5;">
+                <h5 class="custom-popup-title">
+                    ${valore(feature.properties.nomeclasse)}
+                </h5>
+
+                <b>Estensione:</b>
+                ${feature.properties.ettari ?
+                    parseFloat(feature.properties.ettari).toFixed(2)
+                    : 'N/D'} ha
+                <br>
+
+                <b>Valore Ecologico (VE):</b>
+                ${valore(feature.properties.classe_ve)}
+                <br>
+
+                <b>Valore Strutturale (SE):</b>
+                ${valore(feature.properties.classe_se)}
+                <br>
+
+                <b>Valore Faunistico (FG):</b>
+                ${valore(feature.properties.classe_fg)}
+            </div>
+        `;
+
+        layer.bindPopup(contenuto);
+    }
+
+    let primoLayer = true;
+
+    configurazioneLayer.forEach(strato => {
+
+        const gruppoLayer = L.layerGroup();
+
+        controlloLayer.addOverlay(gruppoLayer, strato.nome);
+
+        fetch(`./${strato.file}`)
+            .then(response => {
+
+                if (!response.ok) {
+                    throw new Error(`Impossibile leggere ${strato.file}`);
+                }
+
+                return response.json();
+            })
+
+            .then(data => {
+
+                console.log(`Caricato: ${strato.file}`);
+
+                const geoLayer = L.geoJSON(data, {
+                    style: {
+                        color: strato.colore,
+                        fillColor: strato.colore,
+                        weight: 1.5,
+                        fillOpacity: 0.35
+                    },
+                    onEachFeature: popUpGenerico
                 });
-        });
-    </script>
+
+                geoLayer.addTo(gruppoLayer);
+
+                if (primoLayer) {
+                    map.fitBounds(geoLayer.getBounds());
+                    primoLayer = false;
+                }
+            })
+
+            .catch(error => {
+                console.error(
+                    `Errore nel caricamento del file ${strato.file}`,
+                    error
+                );
+            });
+    });
+
+</script>
+
 </body>
 </html>
