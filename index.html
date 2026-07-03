@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cartografia Pescopennataro</title>
 
-    <link rel="stylesheet" href="httpsst/leaflet.css
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         html, body, #map {
@@ -20,10 +20,9 @@
 
 <div id="map"></div>
 
-unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-
 var map = L.map('map').setView([41.871, 14.292], 14);
 
 L.tileLayer(
@@ -32,7 +31,6 @@ L.tileLayer(
         attribution: '&copy; OpenStreetMap contributors'
     }
 ).addTo(map);
-
 </script>
 
 </body>
