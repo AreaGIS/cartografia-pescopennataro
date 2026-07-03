@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cartografia Pescopennataro</title>
 
-    <!-- Stili CSS di Leaflet incorporati direttamente per evitare blocchi o tagli di URL -->
-    <style>
-        /* Leaflet CSS integrato */
-        .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}.leaflet-container{overflow:hidden}.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-user-drag:none}.leaflet-tile::selection{background:transparent}.leaflet-safari .leaflet-tile{image-rendering:-webkit-optimize-contrast}.leaflet-safari .leaflet-tile-container{width:1600px;height:1600px;-webkit-transform-origin:0 0}.leaflet-marker-icon,.leaflet-marker-shadow{display:block}.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile-pane img,.leaflet-container img{max-width:none!important;max-height:none!important;padding:0!important;margin:0!important}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}.leaflet-vml-shape{width:1px;height:1px}.lvml{behavior:url(#default#VML);display:inline-block;position:absolute}.leaflet-control{position:relative;z-index:800;pointer-events:auto}.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-control{float:left;clear:both}.leaflet-right .leaflet-control{float:right}.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px}.leaflet-fade-anim .leaflet-tile{will-change:opacity}.leaflet-fade-anim .leaflet-popup{opacity:0;-webkit-transition:opacity .2s linear;-moz-transition:opacity .2s linear;transition:opacity .2s linear}.leaflet-fade-anim .leaflet-map-pane .leaflet-popup{opacity:1}.leaflet-zoom-animated{will-change:transform}.leaflet-zoom-anim .leaflet-zoom-animated{-webkit-transition:-webkit-transform .25s cubic-bezier(0,0,.25,1);-moz-transition:-moz-transform .25s cubic-bezier(0,0,.25,1);transition:transform .25s cubic-bezier(0,0,.25,1)}.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{-webkit-transition:none;-moz-transition:none;transition:none}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive{cursor:move;cursor:-webkit-dragging;cursor:-moz-dragging;cursor:dragging}.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-image-layer,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}.leaflet-marker-icon.leaflet-interactive,.leaflet-image-layer.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive,.leaflet-tile.leaflet-interactive{pointer-events:auto}.leaflet-container{background:#ddd;outline-right:0}.leaflet-container a{color:#0078A8}.leaflet-container a.leaflet-active{outline:2px solid orange}.leaflet-zoom-box{width:0;height:0;-moz-box-sizing:border-box;box-sizing:border-box;z-index:800;background:rgba(255,255,255,.5);border:2px dotted #38f}.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,.65);border-radius:4px}.leaflet-bar a{background-color:#fff;border-bottom:1px solid #ccc;width:26px;height:26px;line-height:26px;display:block;text-align:center;text-decoration:none;color:#000}.leaflet-bar a:hover,.leaflet-bar a:focus{background-color:#f4f4f4}.leaflet-bar a:first-child{border-top-left-radius:4px;border-top-right-radius:4px}.leaflet-bar a:last-child{border-bottom-left-radius:4px;border-bottom-right-radius:4px;border-bottom:none}.leaflet-bar a.leaflet-disabled{cursor:default;background-color:#f4f4f4;color:#bbb}.leaflet-touch .leaflet-bar a{width:30px;height:30px;line-height:30px}.leaflet-touch .leaflet-bar a:first-child{border-top-left-radius:2px;border-top-right-radius:2px}.leaflet-touch .leaflet-bar a:last-child{border-bottom-left-radius:2px;border-bottom-right-radius:2px}.leaflet-control-zoom-in,.leaflet-control-zoom-out{font:bold 18px 'Lucida Console',Monaco,monospace;text-indent:1px}.leaflet-touch .leaflet-control-zoom-in,.leaflet-touch .leaflet-control-zoom-out{font-size:22px}.leaflet-control-layers{box-shadow:0 1px 5px rgba(0,0,0,.4);background:#fff;border-radius:5px}.leaflet-control-layers-toggle{background-image:url(https://cloudflare.com);width:36px;height:36px;background-position:50% 50%;background-repeat:no-repeat;display:block}.leaflet-touch .leaflet-control-layers-toggle{width:44px;height:44px}.leaflet-control-layers .leaflet-control-layers-list,.leaflet-control-layers-expanded .leaflet-control-layers-toggle{display:none}.leaflet-control-layers-expanded{padding:6px 10px 6px 6px;color:#333;background:#fff}.leaflet-control-layers-expanded .leaflet-control-layers-list{display:block;position:relative}.leaflet-control-layers-base label,.leaflet-control-layers-overlays label{display:block;margin-bottom:0}.leaflet-control-layers-separator{height:0;border-top:1px solid #ddd;margin:5px -10px 5px -6px}.leaflet-container .leaflet-control-attribution{background:#fff;background:rgba(255,255,255,.8);margin:0}.leaflet-control-attribution,.leaflet-control-scale-line{padding:0 5px;color:#333;line-height:1.4}.leaflet-control-attribution a{text-decoration:none}.leaflet-control-attribution a:hover{text-decoration:underline}.leaflet-attribution-flag{display:inline!important;vertical-align:baseline;width:12px;height:8px;margin:0 5px 0 0}.leaflet-clean-cut{border:none!important}.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px}.leaflet-popup-content-wrapper{padding:1px;text-align:left;border-radius:12px;background:#fff;box-shadow:0 3px 14px rgba(0,0,0,.4)}.leaflet-popup-content{margin:13px 24px 13px 20px;line-height:1.3;font-size:13px}.leaflet-popup-content p{margin:18px 0}.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-left:-20px;overflow:hidden;pointer-events:none}.leaflet-popup-tip{width:17px;height:17px;padding:1px;margin:-10px auto 0;pointer-events:auto;-webkit-transform:rotate(45deg);-moz-transform:rotate(45deg);-ms-transform:rotate(45deg);transform:rotate(45deg);background:#fff;box-shadow:0 3px 14px rgba(0,0,0,.4)}.leaflet-popup-scrolled{overflow:auto;border-bottom:1px solid #ddd;border-top:1px solid #ddd}.leaflet-popup-close-button{position:absolute;top:0;right:0;border:none;text-align:center;width:24px;height:24px;font:16px/24px Tahoma,Verdana,sans-serif;color:#757575;text-decoration:none;background:transparent;cursor:pointer}.leaflet-popup-close-button:hover{color:#555}.leaflet-tooltip{position:absolute;padding:6px;background-color:#fff;border:1px solid #fff;border-radius:3px;color:#222;white-space:nowrap;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.4)}.leaflet-tooltip-top:before,.leaflet-tooltip-bottom:before,.leaflet-tooltip-left:before,.leaflet-tooltip-right:before{position:absolute;pointer-events:none;border:6px solid transparent;background:transparent;content:""}.leaflet-tooltip-bottom{margin-top:6px}.leaflet-tooltip-top{margin-top:-6px}.leaflet-tooltip-bottom:before{top:-12px;left:50%;margin-left:-6px;border-bottom-color:#fff}.leaflet-tooltip-top:before{bottom:-12px;left:50%;margin-left:-6px;border-top-color:#fff}.leaflet-tooltip-left{margin-left:-6px}.leaflet-tooltip-right{margin-left:6px}.leaflet-tooltip-left:before{top:50%;margin-top:-6px;right:-12px;border-left-color:#fff}.leaflet-tooltip-right:before{top:50%;margin-top:-6px;left:-12px;border-right-color:#fff}
+    <!-- Collegamento al file CSS locale -->
+    <link rel="stylesheet" href="./leaflet.css" />
 
-        /* Stili della pagina dell'utente */
+    <style>
         html, body, #map {
             width: 100%;
             height: 100%;
@@ -31,6 +29,90 @@
 
     <div id="map"></div>
 
-    <!-- Carichiamo l'intero blocco JavaScript di Leaflet compresso direttamente inline per bypassare i tagli dei link esterni -->
+    <!-- Collegamento al file JS locale -->
+    <script type="module" src="./leaflet.js"></script>S
+
     <script>
-        /* Leaflet JS v1.9.4 integrato */
+        // 1. Inizializzazione mappa centrata su Pescopennataro
+        var map = L.map('map').setView([41.871, 14.292], 14);
+
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var satellite = L.tileLayer('https://arcgisonline.com{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        });
+
+        var baseMaps = {
+            "OpenStreetMap": osm,
+            "Satellite": satellite
+        };
+
+        // 2. Elenco layer GeoJSON presenti nel tuo repository
+        const configurazioneLayer = [
+            { nome: "Abetine Appenniniche", file: "Abetine dell'Appennino centrale e meridionale.geojson", colore: "#1b5e20" },
+            { nome: "Boschi di Conifere", file: "Boschi di conifere aloctone o fuori dal loro areale.geojson", colore: "#2e7d32" },
+            { nome: "Boschi di Ostrya", file: "Boschi di Ostrya carpinifolia.geojson", colore: "#4caf50" },
+            { nome: "Pioppeti Ripariali", file: "Boschi ripariali a pioppo.geojson", colore: "#00796b" },
+            { nome: "Saliceti Temperati", file: "Boschi ripariali temperati di salici.geojson", colore: "#009688" },
+            { nome: "Faggete Meridionali", file: "Faggete dell'Italia meridionale.geojson", colore: "#8d6e63" },
+            { nome: "Ginepreti", file: "Ginepreti collinari e montani.geojson", colore: "#a1887f" },
+            { nome: "Querceti a Cerro", file: "Querceti temperati a cerro.geojson", colore: "#ff9800" },
+            { nome: "Praterie da sfalcio", file: "Praterie da sfalcio planiziali, collinari e montane.geojson", colore: "#d4e157" },
+            { nome: "Praterie mesofile", file: "Praterie mesofile pascolate.geojson", colore: "#cddc39" },
+            { nome: "Praterie xero-mesofile", file: "Praterie mesiche temperate e submediterranee.geojson", colore: "#afb42b" },
+            { nome: "Praterie xeriche", file: "Praterie xeriche dell'Italia centrale e meridionale.geojson", colore: "#9e9d24" },
+            { nome: "Cespuglieti temperati", file: "Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson", colore: "#81c784" },
+            { nome: "Colture estensive", file: "Colture estensive.geojson", colore: "#fff59d" },
+            { nome: "Rupi carbonatiche", file: "Rupi carbonatiche dei rilievi dell'Appennino centro-meridionale.geojson", colore: "#b0bec5" },
+            { nome: "Centri Abitati", file: "Centri habitati e infrastrutture viarie e ferroviarie.geojson", colore: "#757575" },
+            { nome: "Siti produttivi", file: "Siti produttivi, commerciali e grandi impianti.geojson", colore: "#37474f" }
+        ];
+
+        const overlayMaps = {};
+        const controlloLayer = L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+
+        // 3. Popup per i poligoni
+        function popUpGenerico(feature, layer) {
+            if (feature.properties) {
+                let contenuto = `
+                    <div style="line-height: 1.5;">
+                        <h5 class="custom-popup-title">${feature.properties.nomeclasse || "Unità Cartografica"}</h5>
+                        <b>Estensione:</b> ${feature.properties.ettari ? parseFloat(feature.properties.ettari).toFixed(2) : "N/D"} ha<br>
+                        <b>Valore Ecologico (VE):</b> ${feature.properties.classe_ve || "N/D"}<br>
+                        <b>Valore Strutturale (SE):</b> ${feature.properties.classe_se || "N/D"}<br>
+                        <b>Valore Faunistico (FG):</b> ${feature.properties.classe_fg || "N/D"}
+                    </div>`;
+                layer.bindPopup(contenuto);
+            }
+        }
+
+        // 4. Caricamento automatico
+        configurazioneLayer.forEach(strato => {
+            const gruppoLayer = L.layerGroup();
+            controlloLayer.addOverlay(gruppoLayer, strato.nome);
+
+            fetch(`./${strato.file}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Impossibile leggere il file ${strato.file}`);
+                    return response.json();
+                })
+                .then(data => {
+                    L.geoJSON(data, {
+                        style: {
+                            color: strato.colore,
+                            fillColor: strato.colore,
+                            weight: 1.5,
+                            fillOpacity: 0.35
+                        },
+                        onEachFeature: popUpGenerico
+                    }).addTo(gruppoLayer);
+                })
+                .catch(error => {
+                    console.error(`Errore nel caricamento del file: ${strato.file}`, error);
+                });
+        });
+    </script>
+</body>
+</html>
