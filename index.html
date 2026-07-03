@@ -10,9 +10,16 @@
     <link rel="stylesheet" href="https://jsdelivr.net" />
 
     <style>
-        html, body, #map {
+        html, body {
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa; /* Colore di sfondo provvisorio per verificare il caricamento */
+        }
+        #map {
+            width: 100% !important;
+            height: 100vh !important; /* Forza la mappa a occupare il 100% dell'altezza dello schermo */
             margin: 0;
             padding: 0;
         }
@@ -27,7 +34,8 @@
 </head>
 <body>
 
-    <div id="map"></div>
+    <!-- Contenitore della mappa con altezza forzata inline come sicurezza aggiuntiva -->
+    <div id="map" style="width: 100%; height: 100vh;"></div>
 
     <!-- Script JS stabili -->
     <script src="https://unpkg.com"></script>
@@ -66,7 +74,7 @@
             { nome: "Cespuglieti temperati", file: "Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson", colore: "#81c784" },
             { nome: "Colture estensive", file: "Colture estensive.geojson", colore: "#fff59d" },
             { nome: "Rupi carbonatiche", file: "Rupi carbonatiche dei rilievi dell'Appennino centro-meridionale.geojson", colore: "#b0bec5" },
-            { nome: "Centri Abitati", file: "Centri abitati e infrastrutture viarie e ferroviarie.geojson", colore: "#757575" },
+            { nome: "Centri Abitati", file: "Centri habitati e infrastrutture viarie e ferroviarie.geojson", colore: "#757575" },
             { nome: "Siti produttivi", file: "Siti produttivi, commerciali e grandi impianti.geojson", colore: "#37474f" }
         ];
 
