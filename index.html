@@ -2,14 +2,12 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cartografia Pescopennataro</title>
 
-    <!-- Collegamenti CSS Ufficiali e Stabili -->
-    <link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Collegamenti CSS stabili -->
+    <link rel="stylesheet" href="https://unpkg.com" />
     <link rel="stylesheet" href="https://jsdelivr.net" />
-    <link rel="stylesheet" href="https://cloudflare.com" />
 
     <style>
         html, body, #map {
@@ -17,9 +15,6 @@
             height: 100%;
             margin: 0;
             padding: 0;
-        }
-        .leaflet-container {
-            font-size: 13px;
         }
         .custom-popup-title {
             margin: 0 0 5px 0;
@@ -34,15 +29,11 @@
 
     <div id="map"></div>
 
-    <!-- Script JS Ufficiali e Stabili -->
-    <script src="https://jquery.com"></script>
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Script JS stabili -->
+    <script src="https://unpkg.com"></script>
 
     <script>
-        // ============================================================
-        // 1. INIZIALIZZAZIONE DELLA MAPPA E SFONDI (BASE LAYERS)
-        // ============================================================
+        // Inizializzazione mappa centrata su Pescopennataro
         var map = L.map('map').setView([41.871, 14.292], 14);
 
         var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -58,9 +49,7 @@
             "Satellite": satellite
         };
 
-        // ============================================================
-        // 2. CONFIGURAZIONE DEI FILTRI / STRATI GEOJSON (OVERLAYS)
-        // ============================================================
+        // Elenco layer GeoJSON presenti nel tuo repository
         const configurazioneLayer = [
             { nome: "Abetine Appenniniche", file: "Abetine dell'Appennino centrale e meridionale.geojson", colore: "#1b5e20" },
             { nome: "Boschi di Conifere", file: "Boschi di conifere aloctone o fuori dal loro areale.geojson", colore: "#2e7d32" },
@@ -84,16 +73,11 @@
         const overlayMaps = {};
         const controlloLayer = L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
-        // ============================================================
-        // 3. FUNZIONE DI POPUP UNIFICATA PER TUTTI I VETTORI
-        // ============================================================
         function popUpGenerico(feature, layer) {
             if (feature.properties) {
                 let contenuto = `
                     <div style="line-height: 1.5;">
-                        <h5 class="custom-popup-title">
-                            ${feature.properties.nomeclasse || "Unità Cartografica"}
-                        </h5>
+                        <h5 class="custom-popup-title">${feature.properties.nomeclasse || "Unità Cartografica"}</h5>
                         <b>Estensione:</b> ${feature.properties.ettari ? parseFloat(feature.properties.ettari).toFixed(2) : "N/D"} ha<br>
                         <b>Valore Ecologico (VE):</b> ${feature.properties.classe_ve || "N/D"}<br>
                         <b>Valore Strutturale (SE):</b> ${feature.properties.classe_se || "N/D"}<br>
@@ -103,9 +87,6 @@
             }
         }
 
-        // ============================================================
-        // 4. CICLO ITERATIVO DI CARICAMENTO DEI FILE GEOJSON
-        // ============================================================
         configurazioneLayer.forEach(strato => {
             const gruppoLayer = L.layerGroup();
             controlloLayer.addOverlay(gruppoLayer, strato.nome);
