@@ -1,11 +1,11 @@
-c<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cartografia Pescopennataro</title>
 
-    <link rel="stylesheet"let@1.9.4/dist/leaflet.css
+    @1.9.4/dist/leaflet.css">
 
     <style>
         html, body, #map {
@@ -14,153 +14,24 @@ c<!DOCTYPE html>
             margin: 0;
             padding: 0;
         }
-
-        .custom-popup-title {
-            margin: 0 0 5px 0;
-            color: #1b5e20;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 3px;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-4/dist/leaflet.js"></script>
+@1.9.4/dist/leaflet.js"></script>
 
 <script>
 
 var map = L.map('map').setView([41.871, 14.292], 14);
 
-var osm = L.tileLayer(
+L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
         attribution: '&copy; OpenStreetMap contributors'
     }
 ).addTo(map);
-
-var satellite = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {
-        attribution: 'Tiles &copy; Esri'
-    }
-);
-
-var baseMaps = {
-    "OpenStreetMap": osm,
-    "Satellite": satellite
-};
-
-const configurazioneLayer = [
-    { nome: "Abetine Appenniniche", file: "Abetine dell'Appennino centrale e meridionale.geojson", colore: "#1b5e20" },
-    { nome: "Boschi di Conifere", file: "Boschi di conifere aloctone o fuori dal loro areale.geojson", colore: "#2e7d32" },
-    { nome: "Boschi di Ostrya", file: "Boschi di Ostrya carpinifolia.geojson", colore: "#4caf50" },
-    { nome: "Pioppeti Ripariali", file: "Boschi ripariali a pioppo.geojson", colore: "#00796b" },
-    { nome: "Saliceti Temperati", file: "Boschi ripariali temperati di salici.geojson", colore: "#009688" },
-    { nome: "Faggete Meridionali", file: "Faggete dell'Italia meridionale.geojson", colore: "#8d6e63" },
-    { nome: "Ginepreti", file: "Ginepreti collinari e montani.geojson", colore: "#a1887f" },
-    { nome: "Querceti a Cerro", file: "Querceti temperati a cerro.geojson", colore: "#ff9800" },
-    { nome: "Praterie da sfalcio", file: "Praterie da sfalcio planiziali, collinari e montane.geojson", colore: "#d4e157" },
-    { nome: "Praterie mesofile", file: "Praterie mesofile pascolate.geojson", colore: "#cddc39" },
-    { nome: "Praterie xero-mesofile", file: "Praterie mesiche temperate e submediterranee.geojson", colore: "#afb42b" },
-    { nome: "Praterie xeriche", file: "Praterie xeriche dell'Italia centrale e meridionale.geojson", colore: "#9e9d24" },
-    { nome: "Cespuglieti temperati", file: "Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson", colore: "#81c784" },
-    { nome: "Colture estensive", file: "Colture estensive.geojson", colore: "#fff59d" },
-    { nome: "Rupi carbonatiche", file: "Rupi carbonatiche dei rilievi dell'Appennino centro-meridionale.geojson", colore: "#b0bec5" },
-    { nome: "Centri Abitati", file: "Centri habitati e infrastrutture viarie e ferroviarie.geojson", colore: "#757575" },
-    { nome: "Siti produttivi", file: "Siti produttivi, commerciali e grandi impianti.geojson", colore: "#37474f" }
-];
-
-const overlayMaps = {};
-
-const controlloLayer = L.control.layers(
-    baseMaps,
-    overlayMaps,
-    {
-        collapsed: false
-    }
-).addTo(map);
-
-function valore(v) {
-    return (v !== null && v !== undefined && v !== '') ? v : 'N/D';
-}
-
-function popUpGenerico(feature, layer) {
-
-    if (!feature.properties) return;
-
-    const contenuto = `
-        <div style="line-height:1.5;">
-            <h5 class="custom-popup-title">
-                ${valore(feature.properties.nomeclasse)}
-            </h5>
-
-            <b>Estensione:</b>
-            ${feature.properties.ettari ?
-                parseFloat(feature.properties.ettari).toFixed(2)
-                : 'N/D'} ha
-            <br>
-
-            <b>Valore Ecologico (VE):</b>
-            ${valore(feature.properties.classe_ve)}
-            <br>
-
-            <b>Valore Strutturale (SE):</b>
-            ${valore(feature.properties.classe_se)}
-            <br>
-
-            <b>Valore Faunistico (FG):</b>
-            ${valore(feature.properties.classe_fg)}
-        </div>
-    `;
-
-    layer.bindPopup(contenuto);
-}
-
-let primoLayer = true;
-
-configurazioneLayer.forEach(strato => {
-
-    const gruppoLayer = L.layerGroup();
-
-    controlloLayer.addOverlay(gruppoLayer, strato.nome);
-
-    fetch(encodeURI(strato.file))
-        .then(response => {
-
-            if (!response.ok) {
-                throw new Error(strato.file);
-            }
-
-            return response.json();
-        })
-
-        .then(data => {
-
-            const geoLayer = L.geoJSON(data, {
-                style: {
-                    color: strato.colore,
-                    fillColor: strato.colore,
-                    weight: 1.5,
-                    fillOpacity: 0.35
-                },
-                onEachFeature: popUpGenerico
-            });
-
-            geoLayer.addTo(gruppoLayer);
-
-            if (primoLayer) {
-                map.fitBounds(geoLayer.getBounds());
-                primoLayer = false;
-            }
-        })
-
-        .catch(error => {
-            console.error("Errore caricamento:", error);
-        });
-});
 
 </script>
 
