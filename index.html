@@ -1,4 +1,4 @@
-d:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025-11-07_12-_20251107_121738.jpg" },
+{ id:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025-11-07_12-_20251107_121738.jpg" },
     { id:27, lat:41.8623117, lng:14.2937317, date:"07/11/2025", alt:1321, photo:"p_2025-11-07_12-_20251107_121931.jpg" },
     { id:28, lat:41.86239,   lng:14.293005,  date:"07/11/2025", alt:1308, photo:"p_2025-11-07_12-_20251107_122846.jpg" },
     { id:29, lat:41.8534883, lng:14.2894767, date:"07/11/2025", alt:1438, photo:"p_2025-11-07_13-_20251107_135002.jpg" },
@@ -36,20 +36,83 @@ d:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025
 
   // ── Mappa ─────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
+
+  // Pane dedicati: tutti i layer GeoJSON restano sotto, i rilievi sopra.
+  // Inoltre il pane GeoJSON non intercetta i click: un rilievo resta cliccabile
+  // anche quando ricade dentro qualunque poligono/layer attivo.
+  map.createPane("geojsonPane");
+  map.getPane("geojsonPane").style.zIndex = 350;
+  map.getPane("geojsonPane").style.pointerEvents = "none";
+  map.createPane("rilieviPane");
+  map.getPane("rilieviPane").style.zIndex = 650;
+
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
     maxZoom: 19,
   }).addTo(map);
 
   // ── Marker di rilievo ─────────────────────────────────────────────────────────
-  const markerStyle = { radius:7, fillColor:"#2d6a4f", color:"#ffffff", weight:2, opacity:1, fillOpacity:0.9 };
+  const markerStyle = {
+    radius:7,
+    fillColor:"#2d6a4f",
+    color:"#ffffff",
+    weight:2,
+    opacity:1,
+    fillOpacity:0.9,
+    pane:"rilieviPane"
+  };
+
+  function ensurePopupFullyVisible(popup) {
+    if (!popup || !popup._container) return;
+    const mapBox = map.getContainer().getBoundingClientRect();
+    const popBox = popup._container.getBoundingClientRect();
+    const padding = 24;
+    let dx = 0;
+    let dy = 0;
+
+    if (popBox.left < mapBox.left + padding) {
+      dx = popBox.left - mapBox.left - padding;
+    } else if (popBox.right > mapBox.right - padding) {
+      dx = popBox.right - mapBox.right + padding;
+    }
+
+    if (popBox.top < mapBox.top + padding) {
+      dy = popBox.top - mapBox.top - padding;
+    } else if (popBox.bottom > mapBox.bottom - padding) {
+      dy = popBox.bottom - mapBox.bottom + padding;
+    }
+
+    if (dx || dy) map.panBy([dx, dy], { animate:true, duration:0.25 });
+  }
+
+  map.on("popupopen", function(e) {
+    const popup = e.popup;
+    popup.update();
+    setTimeout(function(){ ensurePopupFullyVisible(popup); }, 80);
+
+    const img = popup.getElement() ? popup.getElement().querySelector(".popup-photo img") : null;
+    if (img) {
+      img.addEventListener("load", function() {
+        popup.update();
+        setTimeout(function(){ ensurePopupFullyVisible(popup); }, 80);
+      }, { once:true });
+    }
+  });
+
+  const rilieviLayer = L.layerGroup([], { pane:"rilieviPane" }).addTo(map);
+
+  function bringRilieviToFront() {
+    rilieviLayer.eachLayer(function(layer) {
+      if (layer.bringToFront) layer.bringToFront();
+    });
+  }
 
   MARKERS.forEach(function(m) {
     const popup = L.popup({
       maxWidth: 340,
       autoPan: true,
-      autoPanPaddingTopLeft: L.point(90, 20),
-      autoPanPaddingBottomRight: L.point(20, 20)
+      autoPanPaddingTopLeft: L.point(100, 30),
+      autoPanPaddingBottomRight: L.point(30, 30)
     }).setContent(
       '<div class="popup-inner">' +
         '<div class="popup-row"><span class="popup-label">Data</span><span class="popup-val">' + m.date + '</span></div>' +
@@ -59,8 +122,9 @@ d:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025
           'onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<span class=&quot;no-photo&quot;>Foto non disponibile</span>\'" /></div>' +
       '</div>'
     );
-    L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(popup).addTo(map);
+    L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(popup).addTo(rilieviLayer);
   });
+  bringRilieviToFront();
 
   // ── Layer GeoJSON ─────────────────────────────────────────────────────────────
   const layerCache  = {};
@@ -97,14 +161,24 @@ d:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025
       if (svg) svg.style.display = nowActive ? "block" : "none";
     }
     if (nowActive) {
-      if (layerCache[id]) { map.addLayer(layerCache[id]); }
+      if (layerCache[id]) {
+        map.addLayer(layerCache[id]);
+        bringRilieviToFront();
+      }
       else {
         fetch(RAW_BASE + encodeURIComponent(def.file))
           .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
           .then(function(gj){
-            const lyr = L.geoJSON(gj, { style: function(){ return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill }; } });
+            const lyr = L.geoJSON(gj, {
+              pane:"geojsonPane",
+              interactive:false,
+              style: function(){ return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill }; }
+            });
             layerCache[id] = lyr;
-            if (layerActive[id]) map.addLayer(lyr);
+            if (layerActive[id]) {
+              map.addLayer(lyr);
+              bringRilieviToFront();
+            }
           })
           .catch(function(e){ console.warn("GeoJSON fetch failed:", id, e); });
       }
