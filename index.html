@@ -1,4 +1,58 @@
-{ id:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025-11-07_12-_20251107_121738.jpg" },
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartografia Pescopennataro - Rilievi fotografici</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <style>
+    html, body { height: 100%; margin: 0; font-family: Arial, Helvetica, sans-serif; }
+    #map { position: fixed; inset: 0; width: 100%; height: 100%; background: #eef2f3; }
+    .topbar { position: absolute; top: 14px; left: 14px; z-index: 1000; display: flex; gap: 8px; }
+    .map-btn { border: 0; border-radius: 10px; padding: 10px 12px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.18); cursor: pointer; font-weight: 700; }
+    .map-btn.active { background: #2d6a4f; color: #fff; }
+    #panel { position: absolute; top: 62px; left: 14px; z-index: 1000; width: 330px; max-height: calc(100vh - 90px); overflow: auto; background: rgba(255,255,255,.96); border-radius: 14px; box-shadow: 0 2px 18px rgba(0,0,0,.22); padding: 14px; }
+    #panel.hidden { display: none; }
+    #panel h2 { margin: 0 0 10px; font-size: 16px; }
+    .bulk { display: flex; gap: 8px; margin-bottom: 10px; }
+    .bulk button { flex: 1; border: 1px solid #ddd; border-radius: 8px; background: #f8f8f8; padding: 8px; cursor: pointer; }
+    .layer-row { display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-bottom: 1px solid #eee; cursor: pointer; user-select: none; }
+    .layer-row:hover { background: #f5f7f5; }
+    .layer-checkbox { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 5px; display: grid; place-items: center; flex: 0 0 auto; }
+    .layer-checkbox svg { display: none; width: 13px; height: 13px; }
+    .layer-swatch { width: 18px; height: 18px; border-radius: 5px; flex: 0 0 auto; opacity: .9; }
+    .layer-name { font-size: 13px; line-height: 1.2; }
+    .leaflet-popup-content-wrapper { border-radius: 12px; }
+    .popup-inner { width: 300px; max-width: 72vw; }
+    .popup-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 13px; }
+    .popup-label { color: #666; font-weight: 700; }
+    .popup-val { color: #222; }
+    .popup-photo { margin-top: 8px; width: 100%; }
+    .popup-photo img { display: block; width: 100%; max-height: 360px; object-fit: contain; border-radius: 10px; background: #f1f1f1; }
+    .no-photo { display: block; padding: 16px; text-align: center; color: #777; background: #f1f1f1; border-radius: 8px; }
+    #info-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.35); align-items: center; justify-content: center; padding: 20px; }
+    #info-overlay.visible { display: flex; }
+    .info-box { max-width: 620px; background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 4px 22px rgba(0,0,0,.25); }
+    .info-box button { float: right; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="topbar">
+    <button id="btn-toggle" class="map-btn" onclick="togglePanel()">Layer</button>
+    <button class="map-btn" onclick="toggleInfo()">Info</button>
+  </div>
+  <div id="panel">
+    <h2>Layer cartografici</h2>
+    <div class="bulk"><button id="btn-all" onclick="selectAll()">Tutti</button><button id="btn-none" onclick="selectNone()">Nessuno</button></div>
+    <div id="layer-list"></div>
+  </div>
+  <div id="info-overlay" onclick="closeInfoOnOverlay(event)"><div class="info-box"><button onclick="toggleInfo()">Chiudi</button><h2>Informazioni</h2><p>Mappa interattiva dei rilievi fotografici e dei layer cartografici.</p></div></div>
+<script>
+  const PHOTO_BASE = "https://raw.githubusercontent.com/AreaGIS/Pescopennataro-Foto/main/files/";
+  const MARKERS = [
+    { id:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025-11-07_12-_20251107_121738.jpg" },
     { id:27, lat:41.8623117, lng:14.2937317, date:"07/11/2025", alt:1321, photo:"p_2025-11-07_12-_20251107_121931.jpg" },
     { id:28, lat:41.86239,   lng:14.293005,  date:"07/11/2025", alt:1308, photo:"p_2025-11-07_12-_20251107_122846.jpg" },
     { id:29, lat:41.8534883, lng:14.2894767, date:"07/11/2025", alt:1438, photo:"p_2025-11-07_13-_20251107_135002.jpg" },
@@ -31,150 +85,66 @@
     { id:"centri",        name:"Centri abitati e infrastrutture",  file:"Centri abitati e infrastrutture viarie e ferroviarie.geojson",         color:"#6b705c", fill:0.50, weight:1.5 },
     { id:"siti",          name:"Siti produttivi e commerciali",    file:"Siti produttivi, commerciali e grandi nodi infrastrutturali.geojson",  color:"#e63946", fill:0.50, weight:1.5 },
   ];
-
   const RAW_BASE = "https://raw.githubusercontent.com/AreaGIS/cartografia-pescopennataro/main/";
 
-  // ── Mappa ─────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
-
-  // Correzione robusta click marker/layer:
-  // i layer cartografici sono solo visuali e non devono mai catturare il click;
-  // i rilievi sono messi in un pane sopra tutti gli overlay.
-  const clickFixStyle = document.createElement("style");
-  clickFixStyle.textContent = `
-    .leaflet-geojson-pane,
-    .leaflet-geojson-pane svg,
-    .leaflet-geojson-pane path,
-    .leaflet-geojson-pane canvas { pointer-events: none !important; }
-    .leaflet-rilievi-pane { z-index: 2000 !important; pointer-events: auto !important; }
-    .leaflet-rilievi-pane .leaflet-marker-icon,
-    .leaflet-rilievi-pane .rilievo-div-marker,
-    .leaflet-rilievi-pane .rilievo-hit { pointer-events: auto !important; cursor: pointer; }
-  `;
-  document.head.appendChild(clickFixStyle);
-
-  // Pane dedicati: tutti i layer GeoJSON restano sotto, i rilievi sopra.
-  // Inoltre il pane GeoJSON non intercetta i click: un rilievo resta cliccabile
-  // anche quando ricade dentro qualunque poligono/layer attivo.
   map.createPane("geojsonPane");
   map.getPane("geojsonPane").style.zIndex = 350;
   map.getPane("geojsonPane").style.pointerEvents = "none";
   map.createPane("rilieviPane");
-  map.getPane("rilieviPane").style.zIndex = 2000;
+  map.getPane("rilieviPane").style.zIndex = 650;
   map.getPane("rilieviPane").style.pointerEvents = "auto";
-  map.getPane("markerPane").style.zIndex = 2100;
-  map.getPane("markerPane").style.pointerEvents = "auto";
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
-    maxZoom: 19,
+    maxZoom: 19
   }).addTo(map);
 
-  // ── Marker di rilievo ─────────────────────────────────────────────────────────
-  const markerStyle = {
-    radius:7,
-    fillColor:"#2d6a4f",
-    color:"#ffffff",
-    weight:2,
-    opacity:1,
-    fillOpacity:0.9,
-    pane:"rilieviPane"
-  };
+  const markerStyle = { radius:7, fillColor:"#2d6a4f", color:"#ffffff", weight:2, opacity:1, fillOpacity:0.9, pane:"rilieviPane" };
+  const markersLayer = L.layerGroup([], { pane:"rilieviPane" }).addTo(map);
 
-  function ensurePopupFullyVisible(popup) {
-    if (!popup || !popup._container) return;
-    const mapBox = map.getContainer().getBoundingClientRect();
-    const popBox = popup._container.getBoundingClientRect();
-    const padding = 24;
-    let dx = 0;
-    let dy = 0;
-
-    if (popBox.left < mapBox.left + padding) {
-      dx = popBox.left - mapBox.left - padding;
-    } else if (popBox.right > mapBox.right - padding) {
-      dx = popBox.right - mapBox.right + padding;
-    }
-
-    if (popBox.top < mapBox.top + padding) {
-      dy = popBox.top - mapBox.top - padding;
-    } else if (popBox.bottom > mapBox.bottom - padding) {
-      dy = popBox.bottom - mapBox.bottom + padding;
-    }
-
-    if (dx || dy) map.panBy([dx, dy], { animate:true, duration:0.25 });
-  }
-
-  map.on("popupopen", function(e) {
-    const popup = e.popup;
-    popup.update();
-    setTimeout(function(){ ensurePopupFullyVisible(popup); }, 80);
-
-    const img = popup.getElement() ? popup.getElement().querySelector(".popup-photo img") : null;
-    if (img) {
-      img.addEventListener("load", function() {
-        popup.update();
-        setTimeout(function(){ ensurePopupFullyVisible(popup); }, 80);
-      }, { once:true });
-    }
-  });
-
-  const rilieviLayer = L.layerGroup([], { pane:"rilieviPane" }).addTo(map);
-
-  function bringRilieviToFront() {
-    rilieviLayer.eachLayer(function(layer) {
-      if (layer.bringToFront) layer.bringToFront();
-    });
+  function ensurePopupFullyVisible() {
+    setTimeout(function() {
+      const popup = map._popup;
+      if (!popup || !popup._container) return;
+      const mapBox = map.getContainer().getBoundingClientRect();
+      const popBox = popup._container.getBoundingClientRect();
+      const padding = 26;
+      let dx = 0, dy = 0;
+      if (popBox.left < mapBox.left + padding) dx = popBox.left - mapBox.left - padding;
+      else if (popBox.right > mapBox.right - padding) dx = popBox.right - mapBox.right + padding;
+      if (popBox.top < mapBox.top + padding) dy = popBox.top - mapBox.top - padding;
+      else if (popBox.bottom > mapBox.bottom - padding) dy = popBox.bottom - mapBox.bottom + padding;
+      if (dx || dy) map.panBy([dx, dy], { animate: true, duration: 0.25 });
+    }, 80);
   }
 
   MARKERS.forEach(function(m) {
-    const popup = L.popup({
-      maxWidth: 340,
-      autoPan: true,
-      autoPanPaddingTopLeft: L.point(100, 30),
-      autoPanPaddingBottomRight: L.point(30, 30)
-    }).setContent(
+    const popupContent =
       '<div class="popup-inner">' +
         '<div class="popup-row"><span class="popup-label">Data</span><span class="popup-val">' + m.date + '</span></div>' +
         '<div class="popup-row"><span class="popup-label">Altitudine</span><span class="popup-val">' + m.alt + ' m</span></div>' +
         '<div class="popup-row"><span class="popup-label">Punto</span><span class="popup-val">#' + m.id + '</span></div>' +
         '<div class="popup-photo"><img src="' + PHOTO_BASE + m.photo + '" loading="lazy" alt="Foto ' + m.id + '" ' +
-          'onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<span class=&quot;no-photo&quot;>Foto non disponibile</span>\'" /></div>' +
-      '</div>'
-    );
-    L.marker([m.lat, m.lng], {
-      pane: "rilieviPane",
-      interactive: true,
-      keyboard: true,
-      riseOnHover: true,
-      zIndexOffset: 100000,
-      icon: L.divIcon({
-        className: "rilievo-div-marker",
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-        popupAnchor: [0, -18],
-        html: '<span class="rilievo-hit" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0);pointer-events:auto;cursor:pointer;"><span style="display:block;width:14px;height:14px;border-radius:50%;background:#2d6a4f;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);pointer-events:none;"></span></span>'
-      })
-    }).bindPopup(popup).addTo(rilieviLayer);
-  });
-  bringRilieviToFront();
-
-  // Fallback: anche se un browser intercetta il click su un overlay SVG,
-  // apriamo il popup del rilievo piu vicino al punto cliccato.
-  map.on("click", function(e) {
-    let nearest = null;
-    let nearestDist = Infinity;
-    rilieviLayer.eachLayer(function(layer) {
-      const p = map.latLngToContainerPoint(layer.getLatLng());
-      const d = p.distanceTo(e.containerPoint);
-      if (d < nearestDist) { nearestDist = d; nearest = layer; }
-    });
-    if (nearest && nearestDist <= 18) nearest.openPopup();
+          'onload="if(window.__ensurePopup)window.__ensurePopup()" ' +
+          'onerror="this.style.display=&quot;none&quot;;this.parentNode.innerHTML=&quot;&lt;span class=\&quot;no-photo\&quot;&gt;Foto non disponibile&lt;/span&gt;&quot;" /></div>' +
+      '</div>';
+    const marker = L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(L.popup({ maxWidth: 360, autoPan: true, keepInView: true, autoPanPadding: L.point(60, 60) }).setContent(popupContent));
+    marker.on("popupopen", ensurePopupFullyVisible);
+    marker.addTo(markersLayer);
   });
 
-  // ── Layer GeoJSON ─────────────────────────────────────────────────────────────
-  const layerCache  = {};
+  window.__ensurePopup = ensurePopupFullyVisible;
+  map.on("popupopen", ensurePopupFullyVisible);
+  window.addEventListener("resize", ensurePopupFullyVisible);
+
+  const layerCache = {};
   const layerActive = {};
-  const DEFAULT_ON  = ["limite"];
+  const DEFAULT_ON = ["limite"];
+
+  function bringMarkersFront() {
+    markersLayer.eachLayer(function(layer) { if (layer.bringToFront) layer.bringToFront(); });
+  }
 
   function buildLayerList() {
     const container = document.getElementById("layer-list");
@@ -182,92 +152,56 @@
       layerActive[def.id] = false;
       const row = document.createElement("div");
       row.className = "layer-row";
-      row.innerHTML =
-        '<div class="layer-checkbox" id="chk-' + def.id + '">' +
-          '<svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>' +
-        '</div>' +
-        '<div class="layer-swatch" style="background:' + def.color + '"></div>' +
-        '<span class="layer-name">' + def.name + '</span>';
+      row.innerHTML = '<div class="layer-checkbox" id="chk-' + def.id + '"><svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg></div><div class="layer-swatch" style="background:' + def.color + '"></div><span class="layer-name">' + def.name + '</span>';
       row.onclick = function() { toggleLayer(def.id, def); };
       container.appendChild(row);
       if (DEFAULT_ON.includes(def.id)) toggleLayer(def.id, def);
     });
   }
 
-  function disableGeoJsonPointerEvents(layer) {
-    const pane = map.getPane("geojsonPane");
-    if (pane) {
-      pane.style.pointerEvents = "none";
-      pane.querySelectorAll("svg,path,canvas").forEach(function(el){ el.style.pointerEvents = "none"; });
-    }
-    if (!layer || !layer.eachLayer) return;
-    layer.eachLayer(function(child) {
-      if (child.options) {
-        child.options.interactive = false;
-        child.options.bubblingMouseEvents = false;
-      }
-      if (child.getElement && child.getElement()) {
-        child.getElement().style.pointerEvents = "none";
-      }
-    });
+  function setCheck(id, def, active) {
+    const chk = document.getElementById("chk-" + id);
+    if (!chk) return;
+    chk.style.borderColor = active ? def.color : "#ccc";
+    chk.style.background = active ? def.color : "transparent";
+    const svg = chk.querySelector("svg");
+    if (svg) svg.style.display = active ? "block" : "none";
   }
 
   function toggleLayer(id, def) {
-    if (!def) def = GEOJSON_LAYERS.find(function(l){ return l.id === id; });
+    if (!def) def = GEOJSON_LAYERS.find(function(l) { return l.id === id; });
     const nowActive = !layerActive[id];
     layerActive[id] = nowActive;
-    const chk = document.getElementById("chk-" + id);
-    if (chk) {
-      chk.style.borderColor = nowActive ? def.color : "#ccc";
-      chk.style.background  = nowActive ? def.color : "transparent";
-      const svg = chk.querySelector("svg");
-      if (svg) svg.style.display = nowActive ? "block" : "none";
-    }
+    setCheck(id, def, nowActive);
     if (nowActive) {
-      if (layerCache[id]) {
-        map.addLayer(layerCache[id]);
-        disableGeoJsonPointerEvents(layerCache[id]);
-        bringRilieviToFront();
-        setTimeout(bringRilieviToFront, 0);
-      }
+      if (layerCache[id]) { map.addLayer(layerCache[id]); bringMarkersFront(); }
       else {
         fetch(RAW_BASE + encodeURIComponent(def.file))
-          .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
-          .then(function(gj){
+          .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+          .then(function(gj) {
             const lyr = L.geoJSON(gj, {
-              pane:"geojsonPane",
-              interactive:false,
-              style: function(){ return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill, interactive:false, bubblingMouseEvents:false }; },
-              onEachFeature: function(feature, layer) {
-                if (layer && layer.options) layer.options.interactive = false;
-                if (layer && layer.getElement && layer.getElement()) layer.getElement().style.pointerEvents = "none";
-              }
+              pane: "geojsonPane",
+              interactive: false,
+              bubblingMouseEvents: false,
+              style: function() { return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill, interactive:false }; }
             });
             layerCache[id] = lyr;
-            if (layerActive[id]) {
-              map.addLayer(lyr);
-              disableGeoJsonPointerEvents(lyr);
-              bringRilieviToFront();
-              setTimeout(bringRilieviToFront, 0);
-            }
+            if (layerActive[id]) { map.addLayer(lyr); bringMarkersFront(); }
           })
-          .catch(function(e){ console.warn("GeoJSON fetch failed:", id, e); });
+          .catch(function(e) { console.warn("GeoJSON fetch failed:", id, e); });
       }
-    } else {
-      if (layerCache[id]) map.removeLayer(layerCache[id]);
-    }
+    } else if (layerCache[id]) { map.removeLayer(layerCache[id]); }
     updateBulkButtons();
+    bringMarkersFront();
   }
 
-  function selectAll()  { GEOJSON_LAYERS.forEach(function(d){ if (!layerActive[d.id]) toggleLayer(d.id, d); }); }
-  function selectNone() { GEOJSON_LAYERS.forEach(function(d){ if ( layerActive[d.id]) toggleLayer(d.id, d); }); }
-
+  function selectAll() { GEOJSON_LAYERS.forEach(function(d) { if (!layerActive[d.id]) toggleLayer(d.id, d); }); }
+  function selectNone() { GEOJSON_LAYERS.forEach(function(d) { if (layerActive[d.id]) toggleLayer(d.id, d); }); }
   function updateBulkButtons() {
-    document.getElementById("btn-all").disabled  = GEOJSON_LAYERS.every(function(l){ return  layerActive[l.id]; });
-    document.getElementById("btn-none").disabled = GEOJSON_LAYERS.every(function(l){ return !layerActive[l.id]; });
+    document.getElementById("btn-all").disabled = GEOJSON_LAYERS.every(function(l) { return layerActive[l.id]; });
+    document.getElementById("btn-none").disabled = GEOJSON_LAYERS.every(function(l) { return !layerActive[l.id]; });
   }
 
-  // ── Toggle pannello layer ─────────────────────────────────────────────────────
   let panelVisible = true;
   function togglePanel() {
     panelVisible = !panelVisible;
@@ -276,20 +210,14 @@
   }
   document.getElementById("btn-toggle").classList.add("active");
 
-  // ── Modale informazioni ───────────────────────────────────────────────────────
   let infoVisible = false;
-  function toggleInfo() {
-    infoVisible = !infoVisible;
-    document.getElementById("info-overlay").classList.toggle("visible", infoVisible);
-  }
-  function closeInfoOnOverlay(e) {
-    if (e.target === document.getElementById("info-overlay")) toggleInfo();
-  }
-  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && infoVisible) toggleInfo(); });
+  function toggleInfo() { infoVisible = !infoVisible; document.getElementById("info-overlay").classList.toggle("visible", infoVisible); }
+  function closeInfoOnOverlay(e) { if (e.target === document.getElementById("info-overlay")) toggleInfo(); }
+  document.addEventListener("keydown", function(e) { if (e.key === "Escape" && infoVisible) toggleInfo(); });
 
-  // ── Avvio ─────────────────────────────────────────────────────────────────────
   buildLayerList();
   updateBulkButtons();
-  </script>
+  bringMarkersFront();
+</script>
 </body>
 </html>
