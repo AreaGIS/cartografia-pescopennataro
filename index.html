@@ -35,6 +35,11 @@
     #info-overlay.visible { display: flex; }
     .info-box { max-width: 620px; background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 4px 22px rgba(0,0,0,.25); }
     .info-box button { float: right; }
+
+    .rilievo-marker { width: 16px; height: 16px; margin-left: -8px; margin-top: -8px; border-radius: 50%; background: #2d6a4f; border: 2px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,.35); box-sizing: border-box; cursor: pointer; }
+    .leaflet-marker-pane { z-index: 700 !important; }
+    .leaflet-overlay-pane { z-index: 400 !important; }
+    .leaflet-geojson-pane, .leaflet-geojson-pane svg, .leaflet-geojson-pane path { pointer-events: none !important; }
   </style>
 </head>
 <body>
@@ -88,20 +93,26 @@
   const RAW_BASE = "https://raw.githubusercontent.com/AreaGIS/cartografia-pescopennataro/main/";
 
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
+  // Pane separato per i GeoJSON: sono visibili ma non catturano i click.
   map.createPane("geojsonPane");
   map.getPane("geojsonPane").style.zIndex = 350;
   map.getPane("geojsonPane").style.pointerEvents = "none";
-  map.createPane("rilieviPane");
-  map.getPane("rilieviPane").style.zIndex = 650;
-  map.getPane("rilieviPane").style.pointerEvents = "auto";
+  // I marker HTML standard restano nel markerPane, sempre sopra i layer poligonali.
+  map.getPane("markerPane").style.zIndex = 700;
+  map.getPane("markerPane").style.pointerEvents = "auto";
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
     maxZoom: 19
   }).addTo(map);
 
-  const markerStyle = { radius:7, fillColor:"#2d6a4f", color:"#ffffff", weight:2, opacity:1, fillOpacity:0.9, pane:"rilieviPane" };
-  const markersLayer = L.layerGroup([], { pane:"rilieviPane" }).addTo(map);
+  const rilievoIcon = L.divIcon({
+    className: "rilievo-marker",
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+    popupAnchor: [0, -8]
+  });
+  const markersLayer = L.layerGroup().addTo(map);
 
   function ensurePopupFullyVisible() {
     setTimeout(function() {
@@ -129,7 +140,17 @@
           'onload="if(window.__ensurePopup)window.__ensurePopup()" ' +
           'onerror="this.style.display=&quot;none&quot;;this.parentNode.innerHTML=&quot;&lt;span class=\&quot;no-photo\&quot;&gt;Foto non disponibile&lt;/span&gt;&quot;" /></div>' +
       '</div>';
-    const marker = L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(L.popup({ maxWidth: 360, autoPan: true, keepInView: true, autoPanPadding: L.point(60, 60) }).setContent(popupContent));
+    const marker = L.marker([m.lat, m.lng], {
+      icon: rilievoIcon,
+      pane: "markerPane",
+      keyboard: true,
+      title: "Rilievo #" + m.id
+    }).bindPopup(L.popup({
+      maxWidth: 360,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: L.point(70, 70)
+    }).setContent(popupContent));
     marker.on("popupopen", ensurePopupFullyVisible);
     marker.addTo(markersLayer);
   });
@@ -143,7 +164,10 @@
   const DEFAULT_ON = ["limite"];
 
   function bringMarkersFront() {
-    markersLayer.eachLayer(function(layer) { if (layer.bringToFront) layer.bringToFront(); });
+    markersLayer.eachLayer(function(layer) {
+      if (layer.setZIndexOffset) layer.setZIndexOffset(10000);
+      if (layer.bringToFront) layer.bringToFront();
+    });
   }
 
   function buildLayerList() {
@@ -183,7 +207,7 @@
               pane: "geojsonPane",
               interactive: false,
               bubblingMouseEvents: false,
-              style: function() { return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill, interactive:false }; }
+              style: function() { return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill }; }
             });
             layerCache[id] = lyr;
             if (layerActive[id]) { map.addLayer(lyr); bringMarkersFront(); }
