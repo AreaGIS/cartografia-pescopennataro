@@ -164,7 +164,7 @@
 
   <div id="map"></div>
 
-  <!-- Colonna pulsanti verticale: info (primo) + layer (secondo) -->
+  <!-- Colonna pulsanti verticale: info · layer · zoom+ · zoom− -->
   <div id="btn-group">
     <button class="map-btn" id="btn-info" title="Informazioni" onclick="toggleInfo()">i</button>
     <button class="map-btn" id="btn-toggle" title="Mostra/nascondi layer" onclick="togglePanel()">
@@ -172,6 +172,18 @@
         <polygon points="12 2 2 7 12 12 22 7 12 2"/>
         <polyline points="2 17 12 22 22 17"/>
         <polyline points="2 12 12 17 22 12"/>
+      </svg>
+    </button>
+    <!-- Separatore visivo -->
+    <div style="height:1px; background:#e8e2da; margin:2px 6px;"></div>
+    <button class="map-btn" id="btn-zoom-in" title="Zoom +" onclick="map.zoomIn()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+    <button class="map-btn" id="btn-zoom-out" title="Zoom −" onclick="map.zoomOut()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
     </button>
   </div>
@@ -271,7 +283,6 @@
 
   // ── Mappa ─────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
-  L.control.zoom({ position: "bottomright" }).addTo(map);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
     maxZoom: 19,
