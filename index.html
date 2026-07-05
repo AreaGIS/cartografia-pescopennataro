@@ -10,11 +10,18 @@
     body { font-family: system-ui, -apple-system, sans-serif; background: #f5f0ea; }
     #map { position: fixed; inset: 0; z-index: 0; }
 
-    /* ── Floating buttons (top-left) ── */
-    #btn-toggle, #btn-info {
+    /* ── Colonna pulsanti verticale (top-left) ── */
+    #btn-group {
       position: fixed;
+      top: 16px;
       left: 16px;
       z-index: 1001;
+      display: flex;
+      flex-direction: column;   /* VERTICALE */
+      gap: 8px;
+    }
+
+    .map-btn {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -27,17 +34,18 @@
       cursor: pointer;
       color: #2d6a4f;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
     }
-    #btn-info   { top: 16px; font-size: 16px; font-weight: 700; font-style: italic; letter-spacing: -0.5px; }
-    #btn-toggle { top: 64px; }
-    #btn-toggle:hover, #btn-info:hover { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
-    #btn-toggle.active { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+    .map-btn:hover  { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+    .map-btn.active { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
 
-    /* ── Control panel ── */
+    #btn-info { font-size: 17px; font-weight: 700; font-style: italic; letter-spacing: -0.5px; }
+
+    /* ── Pannello layer (affiancato ai pulsanti) ── */
     #panel {
       position: fixed;
       top: 16px;
-      left: 64px;
+      left: 64px;          /* 16 (left) + 40 (btn width) + 8 (gap) */
       z-index: 1000;
       width: 276px;
       max-height: calc(100dvh - 32px);
@@ -88,7 +96,7 @@
     .layer-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; opacity: 0.85; }
     .layer-name { font-size: 11.5px; color: #2d2d2d; line-height: 1.35; flex: 1; }
 
-    /* ── Info modal ── */
+    /* ── Modale info ── */
     #info-overlay {
       position: fixed; inset: 0; z-index: 2000;
       background: rgba(0,0,0,0.45);
@@ -119,19 +127,15 @@
       display: inline-flex; align-items: center; justify-content: center;
       width: 24px; height: 24px; border-radius: 50%;
       background: #2d6a4f; color: #fff;
-      font-size: 13px; font-weight: 700; font-style: italic;
-      flex-shrink: 0;
+      font-size: 13px; font-weight: 700; font-style: italic; flex-shrink: 0;
     }
-    #info-modal p {
-      font-size: 13px; color: #3d3530; line-height: 1.65;
-      margin-bottom: 12px;
-    }
+    #info-modal p { font-size: 13px; color: #3d3530; line-height: 1.65; margin-bottom: 12px; }
     #info-modal p:last-of-type { margin-bottom: 0; }
     #btn-close-info {
       position: absolute; top: 14px; right: 14px;
       width: 28px; height: 28px; border-radius: 6px;
       border: 1px solid #e8e2da; background: #f5f0ea;
-      cursor: pointer; color: #6b6459; font-size: 16px; line-height: 1;
+      cursor: pointer; color: #6b6459; font-size: 16px;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.15s, color 0.15s;
     }
@@ -160,19 +164,19 @@
 
   <div id="map"></div>
 
-  <!-- Layers toggle button -->
-  <button id="btn-toggle" title="Mostra/nascondi layer" onclick="togglePanel()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-      <polyline points="2 17 12 22 22 17"/>
-      <polyline points="2 12 12 17 22 12"/>
-    </svg>
-  </button>
+  <!-- Colonna pulsanti verticale: info (primo) + layer (secondo) -->
+  <div id="btn-group">
+    <button class="map-btn" id="btn-info" title="Informazioni" onclick="toggleInfo()">i</button>
+    <button class="map-btn" id="btn-toggle" title="Mostra/nascondi layer" onclick="togglePanel()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+        <polyline points="2 17 12 22 22 17"/>
+        <polyline points="2 12 12 17 22 12"/>
+      </svg>
+    </button>
+  </div>
 
-  <!-- Info button -->
-  <button id="btn-info" title="Informazioni" onclick="toggleInfo()">i</button>
-
-  <!-- Control panel -->
+  <!-- Pannello layer -->
   <div id="panel">
     <div class="panel-header">
       <h1>Rilievo Pescopennataro</h1>
@@ -188,14 +192,11 @@
     </div>
   </div>
 
-  <!-- Info modal -->
+  <!-- Modale informazioni -->
   <div id="info-overlay" onclick="closeInfoOnOverlay(event)">
     <div id="info-modal">
       <button id="btn-close-info" onclick="toggleInfo()" title="Chiudi">&#x2715;</button>
-      <h2>
-        <span class="badge">i</span>
-        Informazioni
-      </h2>
+      <h2><span class="badge">i</span> Informazioni</h2>
       <p>Mappa dei ritrovamenti micologici nel territorio di Pescopennataro (Molise, Italy), realizzata per documentare e visualizzare le osservazioni georeferenziate delle specie fungine presenti nell&rsquo;area.</p>
       <p>Raccolta georeferenziata dei ritrovamenti micologici nel territorio di Pescopennataro, Molise (Italy).</p>
       <p>Mappa interattiva dei funghi osservati a Pescopennataro, nel cuore del Molise.</p>
@@ -204,7 +205,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-  // ── Data ─────────────────────────────────────────────────────────────────────
   const PHOTO_BASE = "https://raw.githubusercontent.com/AreaGIS/Pescopennataro-Foto/main/files/";
 
   const MARKERS = [
@@ -247,29 +247,29 @@
   ];
 
   const GEOJSON_LAYERS = [
-    { id:"limite",        name:"Limite amministrativo",           file:"Pescopennataro - Limite amministrativo.geojson",                            color:"#1a1a2e", fill:0.05, weight:2.5 },
-    { id:"faggete",       name:"Faggete Italia meridionale",       file:"Faggete dell\u2019Italia meridionale.geojson",                              color:"#1b4332", fill:0.45, weight:1   },
-    { id:"abetine",       name:"Abetine App. centrale e merid.",   file:"Abetine dell\u2019Appennino centrale e meridionale.geojson",                color:"#081c15", fill:0.45, weight:1   },
-    { id:"ostrya",        name:"Boschi di Ostrya carpinifolia",    file:"Boschi di Ostrya carpinifolia.geojson",                                     color:"#2d6a4f", fill:0.45, weight:1   },
-    { id:"conifere",      name:"Boschi conifere alloctone",        file:"Boschi di conifere alloctone o fuori dal loro areale.geojson",              color:"#40916c", fill:0.45, weight:1   },
-    { id:"pioppi",        name:"Boschi ripariali a pioppi",        file:"Boschi ripariali a pioppi.geojson",                                         color:"#52b788", fill:0.45, weight:1   },
-    { id:"salici",        name:"Boschi ripariali di salici",       file:"Boschi ripariali temperati di salici.geojson",                              color:"#74c69d", fill:0.45, weight:1   },
-    { id:"querceti",      name:"Querceti temperati a cerro",       file:"Querceti temperati a cerro.geojson",                                        color:"#7b4f12", fill:0.45, weight:1   },
-    { id:"cespuglieti",   name:"Cespuglieti a latifoglie decidue", file:"Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson",       color:"#a7c957", fill:0.45, weight:1   },
-    { id:"ginepreti",     name:"Ginepreti collinari e montani",    file:"Ginepreti collinari e montani.geojson",                                     color:"#606c38", fill:0.45, weight:1   },
-    { id:"prat-sfalcio",  name:"Praterie da sfalcio",              file:"Praterie da sfalcio planiziali, collinari e montane.geojson",               color:"#a8dadc", fill:0.45, weight:1   },
-    { id:"prat-mesiche",  name:"Praterie mesiche temperate",       file:"Praterie mesiche temperate e supramediterranee.geojson",                    color:"#57cc99", fill:0.45, weight:1   },
-    { id:"prat-mesofile", name:"Praterie mesofile pascolate",      file:"Praterie mesofile pascolate.geojson",                                       color:"#80b918", fill:0.45, weight:1   },
-    { id:"prat-xeriche",  name:"Praterie xeriche Italia C-M",      file:"Praterie xeriche dell\u2019Italia centrale e meridionale.geojson",          color:"#d4e157", fill:0.45, weight:1   },
-    { id:"colture",       name:"Colture estensive",                file:"Colture estensive.geojson",                                                 color:"#e9c46a", fill:0.45, weight:1   },
-    { id:"rupi",          name:"Rupi carbonatiche",                file:"Rupi carbonatiche dei rilievi del Mediterraneo occidentale.geojson",        color:"#9e9e9e", fill:0.45, weight:1   },
-    { id:"centri",        name:"Centri abitati e infrastrutture",  file:"Centri abitati e infrastrutture viarie e ferroviarie.geojson",              color:"#6b705c", fill:0.50, weight:1.5 },
-    { id:"siti",          name:"Siti produttivi e commerciali",    file:"Siti produttivi, commerciali e grandi nodi infrastrutturali.geojson",       color:"#e63946", fill:0.50, weight:1.5 },
+    { id:"limite",        name:"Limite amministrativo",           file:"Pescopennataro - Limite amministrativo.geojson",                       color:"#1a1a2e", fill:0.05, weight:2.5 },
+    { id:"faggete",       name:"Faggete Italia meridionale",       file:"Faggete dell\u2019Italia meridionale.geojson",                         color:"#1b4332", fill:0.45, weight:1   },
+    { id:"abetine",       name:"Abetine App. centrale e merid.",   file:"Abetine dell\u2019Appennino centrale e meridionale.geojson",           color:"#081c15", fill:0.45, weight:1   },
+    { id:"ostrya",        name:"Boschi di Ostrya carpinifolia",    file:"Boschi di Ostrya carpinifolia.geojson",                                color:"#2d6a4f", fill:0.45, weight:1   },
+    { id:"conifere",      name:"Boschi conifere alloctone",        file:"Boschi di conifere alloctone o fuori dal loro areale.geojson",         color:"#40916c", fill:0.45, weight:1   },
+    { id:"pioppi",        name:"Boschi ripariali a pioppi",        file:"Boschi ripariali a pioppi.geojson",                                    color:"#52b788", fill:0.45, weight:1   },
+    { id:"salici",        name:"Boschi ripariali di salici",       file:"Boschi ripariali temperati di salici.geojson",                         color:"#74c69d", fill:0.45, weight:1   },
+    { id:"querceti",      name:"Querceti temperati a cerro",       file:"Querceti temperati a cerro.geojson",                                   color:"#7b4f12", fill:0.45, weight:1   },
+    { id:"cespuglieti",   name:"Cespuglieti a latifoglie decidue", file:"Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson",  color:"#a7c957", fill:0.45, weight:1   },
+    { id:"ginepreti",     name:"Ginepreti collinari e montani",    file:"Ginepreti collinari e montani.geojson",                                color:"#606c38", fill:0.45, weight:1   },
+    { id:"prat-sfalcio",  name:"Praterie da sfalcio",              file:"Praterie da sfalcio planiziali, collinari e montane.geojson",          color:"#a8dadc", fill:0.45, weight:1   },
+    { id:"prat-mesiche",  name:"Praterie mesiche temperate",       file:"Praterie mesiche temperate e supramediterranee.geojson",               color:"#57cc99", fill:0.45, weight:1   },
+    { id:"prat-mesofile", name:"Praterie mesofile pascolate",      file:"Praterie mesofile pascolate.geojson",                                  color:"#80b918", fill:0.45, weight:1   },
+    { id:"prat-xeriche",  name:"Praterie xeriche Italia C-M",      file:"Praterie xeriche dell\u2019Italia centrale e meridionale.geojson",     color:"#d4e157", fill:0.45, weight:1   },
+    { id:"colture",       name:"Colture estensive",                file:"Colture estensive.geojson",                                            color:"#e9c46a", fill:0.45, weight:1   },
+    { id:"rupi",          name:"Rupi carbonatiche",                file:"Rupi carbonatiche dei rilievi del Mediterraneo occidentale.geojson",   color:"#9e9e9e", fill:0.45, weight:1   },
+    { id:"centri",        name:"Centri abitati e infrastrutture",  file:"Centri abitati e infrastrutture viarie e ferroviarie.geojson",         color:"#6b705c", fill:0.50, weight:1.5 },
+    { id:"siti",          name:"Siti produttivi e commerciali",    file:"Siti produttivi, commerciali e grandi nodi infrastrutturali.geojson",  color:"#e63946", fill:0.50, weight:1.5 },
   ];
 
   const RAW_BASE = "https://raw.githubusercontent.com/AreaGIS/cartografia-pescopennataro/main/";
 
-  // ── Map ───────────────────────────────────────────────────────────────────────
+  // ── Mappa ─────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
   L.control.zoom({ position: "bottomright" }).addTo(map);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -277,7 +277,7 @@
     maxZoom: 19,
   }).addTo(map);
 
-  // ── Markers ───────────────────────────────────────────────────────────────────
+  // ── Marker di rilievo ─────────────────────────────────────────────────────────
   const markerStyle = { radius:7, fillColor:"#2d6a4f", color:"#ffffff", weight:2, opacity:1, fillOpacity:0.9 };
 
   MARKERS.forEach(function(m) {
@@ -293,7 +293,7 @@
     L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(popup).addTo(map);
   });
 
-  // ── GeoJSON layers ────────────────────────────────────────────────────────────
+  // ── Layer GeoJSON ─────────────────────────────────────────────────────────────
   const layerCache  = {};
   const layerActive = {};
   const DEFAULT_ON  = ["limite"];
@@ -346,24 +346,23 @@
   }
 
   function selectAll()  { GEOJSON_LAYERS.forEach(function(d){ if (!layerActive[d.id]) toggleLayer(d.id, d); }); }
-  function selectNone() { GEOJSON_LAYERS.forEach(function(d){ if (layerActive[d.id])  toggleLayer(d.id, d); }); }
+  function selectNone() { GEOJSON_LAYERS.forEach(function(d){ if ( layerActive[d.id]) toggleLayer(d.id, d); }); }
 
   function updateBulkButtons() {
     document.getElementById("btn-all").disabled  = GEOJSON_LAYERS.every(function(l){ return  layerActive[l.id]; });
     document.getElementById("btn-none").disabled = GEOJSON_LAYERS.every(function(l){ return !layerActive[l.id]; });
   }
 
-  // ── Panel toggle ──────────────────────────────────────────────────────────────
+  // ── Toggle pannello layer ─────────────────────────────────────────────────────
   let panelVisible = true;
   function togglePanel() {
     panelVisible = !panelVisible;
     document.getElementById("panel").classList.toggle("hidden", !panelVisible);
     document.getElementById("btn-toggle").classList.toggle("active", panelVisible);
   }
-  // Start with panel visible and button highlighted
   document.getElementById("btn-toggle").classList.add("active");
 
-  // ── Info modal ────────────────────────────────────────────────────────────────
+  // ── Modale informazioni ───────────────────────────────────────────────────────
   let infoVisible = false;
   function toggleInfo() {
     infoVisible = !infoVisible;
@@ -372,10 +371,9 @@
   function closeInfoOnOverlay(e) {
     if (e.target === document.getElementById("info-overlay")) toggleInfo();
   }
-  // Close with Escape key
   document.addEventListener("keydown", function(e){ if (e.key === "Escape" && infoVisible) toggleInfo(); });
 
-  // ── Init ──────────────────────────────────────────────────────────────────────
+  // ── Avvio ─────────────────────────────────────────────────────────────────────
   buildLayerList();
   updateBulkButtons();
   </script>
