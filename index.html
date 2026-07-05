@@ -44,7 +44,10 @@
   map.getPane("geojsonPane").style.zIndex = 350;
   map.getPane("geojsonPane").style.pointerEvents = "none";
   map.createPane("rilieviPane");
-  map.getPane("rilieviPane").style.zIndex = 650;
+  map.getPane("rilieviPane").style.zIndex = 1000;
+  map.getPane("rilieviPane").style.pointerEvents = "auto";
+  map.getPane("markerPane").style.zIndex = 1100;
+  map.getPane("markerPane").style.pointerEvents = "auto";
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
@@ -122,7 +125,19 @@
           'onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<span class=&quot;no-photo&quot;>Foto non disponibile</span>\'" /></div>' +
       '</div>'
     );
-    L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(popup).addTo(rilieviLayer);
+    L.marker([m.lat, m.lng], {
+      pane: "markerPane",
+      interactive: true,
+      keyboard: true,
+      zIndexOffset: 10000,
+      icon: L.divIcon({
+        className: "rilievo-div-marker",
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -10],
+        html: '<span style="display:block;width:14px;height:14px;border-radius:50%;background:#2d6a4f;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);pointer-events:auto;"></span>'
+      })
+    }).bindPopup(popup).addTo(rilieviLayer);
   });
   bringRilieviToFront();
 
@@ -149,6 +164,19 @@
     });
   }
 
+  function disableGeoJsonPointerEvents(layer) {
+    if (!layer || !layer.eachLayer) return;
+    layer.eachLayer(function(child) {
+      if (child.options) {
+        child.options.interactive = false;
+        child.options.bubblingMouseEvents = false;
+      }
+      if (child.getElement && child.getElement()) {
+        child.getElement().style.pointerEvents = "none";
+      }
+    });
+  }
+
   function toggleLayer(id, def) {
     if (!def) def = GEOJSON_LAYERS.find(function(l){ return l.id === id; });
     const nowActive = !layerActive[id];
@@ -163,7 +191,9 @@
     if (nowActive) {
       if (layerCache[id]) {
         map.addLayer(layerCache[id]);
+        disableGeoJsonPointerEvents(layerCache[id]);
         bringRilieviToFront();
+        setTimeout(bringRilieviToFront, 0);
       }
       else {
         fetch(RAW_BASE + encodeURIComponent(def.file))
@@ -172,12 +202,18 @@
             const lyr = L.geoJSON(gj, {
               pane:"geojsonPane",
               interactive:false,
-              style: function(){ return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill }; }
+              style: function(){ return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill, interactive:false, bubblingMouseEvents:false }; },
+              onEachFeature: function(feature, layer) {
+                if (layer && layer.options) layer.options.interactive = false;
+                if (layer && layer.getElement && layer.getElement()) layer.getElement().style.pointerEvents = "none";
+              }
             });
             layerCache[id] = lyr;
             if (layerActive[id]) {
               map.addLayer(lyr);
+              disableGeoJsonPointerEvents(lyr);
               bringRilieviToFront();
+              setTimeout(bringRilieviToFront, 0);
             }
           })
           .catch(function(e){ console.warn("GeoJSON fetch failed:", id, e); });
