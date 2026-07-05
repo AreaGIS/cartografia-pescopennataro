@@ -3,60 +3,249 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartografia Pescopennataro - Rilievi fotografici</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <title>Rilievo Pescopennataro</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body { height: 100%; margin: 0; font-family: Arial, Helvetica, sans-serif; }
-    #map { position: fixed; inset: 0; width: 100%; height: 100%; background: #eef2f3; }
-    .topbar { position: absolute; top: 14px; left: 14px; z-index: 1000; display: flex; gap: 8px; }
-    .map-btn { border: 0; border-radius: 10px; padding: 10px 12px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.18); cursor: pointer; font-weight: 700; }
-    .map-btn.active { background: #2d6a4f; color: #fff; }
-    #panel { position: absolute; top: 62px; left: 14px; z-index: 1000; width: 330px; max-height: calc(100vh - 90px); overflow: auto; background: rgba(255,255,255,.96); border-radius: 14px; box-shadow: 0 2px 18px rgba(0,0,0,.22); padding: 14px; }
-    #panel.hidden { display: none; }
-    #panel h2 { margin: 0 0 10px; font-size: 16px; }
-    .bulk { display: flex; gap: 8px; margin-bottom: 10px; }
-    .bulk button { flex: 1; border: 1px solid #ddd; border-radius: 8px; background: #f8f8f8; padding: 8px; cursor: pointer; }
-    .layer-row { display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-bottom: 1px solid #eee; cursor: pointer; user-select: none; }
-    .layer-row:hover { background: #f5f7f5; }
-    .layer-checkbox { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 5px; display: grid; place-items: center; flex: 0 0 auto; }
-    .layer-checkbox svg { display: none; width: 13px; height: 13px; }
-    .layer-swatch { width: 18px; height: 18px; border-radius: 5px; flex: 0 0 auto; opacity: .9; }
-    .layer-name { font-size: 13px; line-height: 1.2; }
-    .leaflet-popup-content-wrapper { border-radius: 12px; }
-    .popup-inner { width: 300px; max-width: 72vw; }
-    .popup-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 13px; }
-    .popup-label { color: #666; font-weight: 700; }
-    .popup-val { color: #222; }
-    .popup-photo { margin-top: 8px; width: 100%; }
-    .popup-photo img { display: block; width: 100%; max-height: 360px; object-fit: contain; border-radius: 10px; background: #f1f1f1; }
-    .no-photo { display: block; padding: 16px; text-align: center; color: #777; background: #f1f1f1; border-radius: 8px; }
-    #info-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.35); align-items: center; justify-content: center; padding: 20px; }
-    #info-overlay.visible { display: flex; }
-    .info-box { max-width: 620px; background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 4px 22px rgba(0,0,0,.25); }
-    .info-box button { float: right; }
-
-    .rilievo-marker { width: 16px; height: 16px; margin-left: -8px; margin-top: -8px; border-radius: 50%; background: #2d6a4f; border: 2px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,.35); box-sizing: border-box; cursor: pointer; }
-    .leaflet-marker-pane { z-index: 700 !important; }
-    .leaflet-overlay-pane { z-index: 400 !important; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f0ea; }
+    #map { position: fixed; inset: 0; z-index: 0; }
     .leaflet-geojson-pane, .leaflet-geojson-pane svg, .leaflet-geojson-pane path { pointer-events: none !important; }
+
+    /* ── Colonna pulsanti verticale (top-left) ── */
+    #btn-group {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;   /* VERTICALE */
+      gap: 8px;
+    }
+
+    .map-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid #d1c9bf;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      cursor: pointer;
+      color: #2d6a4f;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .map-btn:hover  { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+    .map-btn.active { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+
+    #btn-info { font-size: 17px; font-weight: 700; font-style: italic; letter-spacing: -0.5px; }
+
+    /* ── Pannello layer (affiancato ai pulsanti) ── */
+    #panel {
+      position: fixed;
+      top: 16px;
+      left: 64px;          /* 16 (left) + 40 (btn width) + 8 (gap) */
+      z-index: 1000;
+      width: 276px;
+      max-height: calc(100dvh - 32px);
+      background: #ffffff;
+      border: 1px solid #d1c9bf;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    #panel.hidden { opacity: 0; pointer-events: none; transform: translateX(-8px); }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e8e2da;
+      background: #f5f0ea;
+      flex-shrink: 0;
+    }
+    .panel-header h1 { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+    .panel-header p  { font-size: 11px; color: #6b6459; margin-top: 2px; }
+    .panel-body { overflow-y: auto; flex: 1; padding: 14px 16px; }
+    .section-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #1a1a1a; margin-bottom: 10px;
+    }
+
+    .bulk-btns { display: flex; gap: 6px; margin-bottom: 12px; }
+    .bulk-btn {
+      font-size: 10px; padding: 3px 10px; border-radius: 4px;
+      border: 1px solid #d1c9bf; background: #f5f0ea; color: #3d3530;
+      cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .bulk-btn:hover { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+    .bulk-btn.danger:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
+    .bulk-btn:disabled { opacity: 0.4; cursor: default; }
+    .bulk-btn:disabled:hover { background: #f5f0ea; color: #3d3530; border-color: #d1c9bf; }
+
+    .layer-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+    .layer-row:hover .layer-name { color: #2d6a4f; }
+    .layer-checkbox {
+      width: 14px; height: 14px; border-radius: 3px; border: 2px solid #ccc;
+      flex-shrink: 0; transition: background 0.15s, border-color 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .layer-checkbox svg { display: none; width: 9px; height: 9px; }
+    .layer-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; opacity: 0.85; }
+    .layer-name { font-size: 11.5px; color: #2d2d2d; line-height: 1.35; flex: 1; }
+
+    /* ── Modale info ── */
+    #info-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #info-overlay.visible { opacity: 1; pointer-events: auto; }
+    #info-modal {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+      width: 90%;
+      max-width: 480px;
+      padding: 28px 28px 24px;
+      position: relative;
+      transform: translateY(8px);
+      transition: transform 0.2s;
+    }
+    #info-overlay.visible #info-modal { transform: translateY(0); }
+    #info-modal h2 {
+      font-size: 15px; font-weight: 700; color: #1a1a1a;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 1px solid #e8e2da;
+      display: flex; align-items: center; gap: 10px;
+    }
+    #info-modal h2 .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #2d6a4f; color: #fff;
+      font-size: 13px; font-weight: 700; font-style: italic; flex-shrink: 0;
+    }
+    #info-modal p { font-size: 13px; color: #3d3530; line-height: 1.65; margin-bottom: 12px; }
+    #info-modal p:last-of-type { margin-bottom: 0; }
+    #btn-close-info {
+      position: absolute; top: 14px; right: 14px;
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1px solid #e8e2da; background: #f5f0ea;
+      cursor: pointer; color: #6b6459; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    #btn-close-info:hover { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+
+    /* ── Popup ── */
+    .leaflet-popup-content { margin: 0; }
+    .popup-inner { padding: 10px 12px; min-width: 220px; }
+    .popup-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; padding: 4px 0; border-bottom: 1px solid #f0ebe4;
+    }
+    .popup-row:last-of-type { border-bottom: none; }
+    .popup-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9e9080; }
+    .popup-val   { font-size: 12px; font-weight: 500; color: #1a1a1a; }
+    .popup-photo {
+      width: 300px; margin-top: 8px; border-radius: 4px; overflow: hidden;
+      background: #f5f0ea; min-height: 80px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .popup-photo img { width: 100%; height: auto; display: block; }
+    .popup-photo .no-photo { font-size: 11px; color: #9e9080; font-style: italic; padding: 20px; }
   </style>
 </head>
 <body>
+
   <div id="map"></div>
-  <div class="topbar">
-    <button id="btn-toggle" class="map-btn" onclick="togglePanel()">Layer</button>
-    <button class="map-btn" onclick="toggleInfo()">Info</button>
+
+  <!-- Colonna pulsanti verticale: info · layer · zoom+ · zoom− -->
+  <div id="btn-group">
+    <button class="map-btn" id="btn-info" title="Informazioni" onclick="toggleInfo()">i</button>
+    <button class="map-btn" id="btn-toggle" title="Mostra/nascondi layer" onclick="togglePanel()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+        <polyline points="2 17 12 22 22 17"/>
+        <polyline points="2 12 12 17 22 12"/>
+      </svg>
+    </button>
+    <!-- Separatore visivo -->
+    <div style="height:1px; background:#e8e2da; margin:2px 6px;"></div>
+    <button class="map-btn" id="btn-zoom-in" title="Zoom +" onclick="map.zoomIn()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+    <button class="map-btn" id="btn-zoom-out" title="Zoom −" onclick="map.zoomOut()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
   </div>
+
+  <!-- Pannello layer -->
   <div id="panel">
-    <h2>Layer cartografici</h2>
-    <div class="bulk"><button id="btn-all" onclick="selectAll()">Tutti</button><button id="btn-none" onclick="selectNone()">Nessuno</button></div>
-    <div id="layer-list"></div>
+    <div class="panel-header">
+      <h1>Rilievo Pescopennataro</h1>
+      <p>36 punti &nbsp;|&nbsp; 2 sessioni di campo</p>
+    </div>
+    <div class="panel-body">
+      <div class="section-title">Layer GeoJSON</div>
+      <div class="bulk-btns">
+        <button class="bulk-btn" id="btn-all"  onclick="selectAll()">Tutti</button>
+        <button class="bulk-btn danger" id="btn-none" onclick="selectNone()">Nessuno</button>
+      </div>
+      <div id="layer-list"></div>
+    </div>
   </div>
-  <div id="info-overlay" onclick="closeInfoOnOverlay(event)"><div class="info-box"><button onclick="toggleInfo()">Chiudi</button><h2>Informazioni</h2><p>Mappa interattiva dei rilievi fotografici e dei layer cartografici.</p></div></div>
-<script>
+
+  <!-- Modale informazioni -->
+  <div id="info-overlay" onclick="closeInfoOnOverlay(event)">
+    <div id="info-modal">
+      <button id="btn-close-info" onclick="toggleInfo()" title="Chiudi">&#x2715;</button>
+      <h2><span class="badge">i</span> Informazioni</h2>
+      <p>Mappa dei ritrovamenti micologici nel territorio di Pescopennataro (Molise, Italy), realizzata per documentare e visualizzare le osservazioni georeferenziate delle specie fungine presenti nell&rsquo;area.</p>
+      <p>Raccolta georeferenziata dei ritrovamenti micologici nel territorio di Pescopennataro, Molise (Italy).</p>
+      <p>Mappa interattiva dei funghi osservati a Pescopennataro, nel cuore del Molise.</p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
   const PHOTO_BASE = "https://raw.githubusercontent.com/AreaGIS/Pescopennataro-Foto/main/files/";
+
   const MARKERS = [
+    { id:1,  lat:41.864892,  lng:14.2917636, date:"02/11/2025", alt:1281, photo:"1000180667.jpg" },
+    { id:2,  lat:41.8643363, lng:14.290558,  date:"02/11/2025", alt:1297, photo:"p_2025-11-02_09-_20251102_094108.jpg" },
+    { id:3,  lat:41.8633132, lng:14.2908792, date:"02/11/2025", alt:1332, photo:"p_2025-11-02_09-_20251102_094920.jpg" },
+    { id:4,  lat:41.8632529, lng:14.2908759, date:"02/11/2025", alt:1326, photo:"p_2025-11-02_09-_20251102_095306.jpg" },
+    { id:5,  lat:41.8630757, lng:14.2907474, date:"02/11/2025", alt:1316, photo:"p_2025-11-02_09-_20251102_095636.jpg" },
+    { id:6,  lat:41.8627402, lng:14.2907328, date:"02/11/2025", alt:1337, photo:"p_2025-11-02_10-_20251102_100130.jpg" },
+    { id:7,  lat:41.8614602, lng:14.2912786, date:"02/11/2025", alt:1363, photo:"p_2025-11-02_10-_20251102_101415.jpg" },
+    { id:8,  lat:41.8609729, lng:14.2911907, date:"02/11/2025", alt:1354, photo:"p_2025-11-02_10-_20251102_101937.jpg" },
+    { id:9,  lat:41.8610766, lng:14.2911532, date:"02/11/2025", alt:1358, photo:"p_2025-11-02_10-_20251102_102212.jpg" },
+    { id:10, lat:41.8619525, lng:14.2908016, date:"02/11/2025", alt:1330, photo:"p_2025-11-02_10-_20251102_102950.jpg" },
+    { id:11, lat:41.860825,  lng:14.2952483, date:"07/11/2025", alt:1316, photo:"p_2025-11-07_10-_20251107_103119.jpg" },
+    { id:12, lat:41.860625,  lng:14.2952,    date:"07/11/2025", alt:1320, photo:"p_2025-11-07_10-_20251107_103935.jpg" },
+    { id:13, lat:41.8606883, lng:14.2948367, date:"07/11/2025", alt:1326, photo:"p_2025-11-07_10-_20251107_104250.jpg" },
+    { id:14, lat:41.8602667, lng:14.2952383, date:"07/11/2025", alt:1324, photo:"p_2025-11-07_10-_20251107_105155.jpg" },
+    { id:15, lat:41.86022,   lng:14.2951183, date:"07/11/2025", alt:1324, photo:"p_2025-11-07_10-_20251107_105254.jpg" },
+    { id:16, lat:41.8600633, lng:14.29505,   date:"07/11/2025", alt:1317, photo:"p_2025-11-07_10-_20251107_105710.jpg" },
+    { id:17, lat:41.8599783, lng:14.2950267, date:"07/11/2025", alt:1318, photo:"p_2025-11-07_10-_20251107_105949.jpg" },
+    { id:18, lat:41.8603467, lng:14.2948717, date:"07/11/2025", alt:1326, photo:"p_2025-11-07_11-_20251107_110443.jpg" },
+    { id:19, lat:41.8602033, lng:14.2949417, date:"07/11/2025", alt:1325, photo:"p_2025-11-07_11-_20251107_110854.jpg" },
+    { id:20, lat:41.861145,  lng:14.2950583, date:"07/11/2025", alt:1312, photo:"p_2025-11-07_11-_20251107_112010.jpg" },
+    { id:21, lat:41.86164,   lng:14.295145,  date:"07/11/2025", alt:1320, photo:"p_2025-11-07_11-_20251107_112757.jpg" },
+    { id:22, lat:41.8617083, lng:14.2950733, date:"07/11/2025", alt:1301, photo:"p_2025-11-07_11-_20251107_113135.jpg" },
+    { id:23, lat:41.8620017, lng:14.2952233, date:"07/11/2025", alt:1297, photo:"p_2025-11-07_11-_20251107_113628.jpg" },
+    { id:24, lat:41.8620383, lng:14.29444,   date:"07/11/2025", alt:1282, photo:"p_2025-11-07_11-_20251107_115302.jpg" },
+    { id:25, lat:41.8620417, lng:14.29434,   date:"07/11/2025", alt:1297, photo:"p_2025-11-07_12-_20251107_120458.jpg" },
     { id:26, lat:41.8623117, lng:14.2937433, date:"07/11/2025", alt:1310, photo:"p_2025-11-07_12-_20251107_121738.jpg" },
     { id:27, lat:41.8623117, lng:14.2937317, date:"07/11/2025", alt:1321, photo:"p_2025-11-07_12-_20251107_121931.jpg" },
     { id:28, lat:41.86239,   lng:14.293005,  date:"07/11/2025", alt:1308, photo:"p_2025-11-07_12-_20251107_122846.jpg" },
@@ -90,85 +279,62 @@
     { id:"centri",        name:"Centri abitati e infrastrutture",  file:"Centri abitati e infrastrutture viarie e ferroviarie.geojson",         color:"#6b705c", fill:0.50, weight:1.5 },
     { id:"siti",          name:"Siti produttivi e commerciali",    file:"Siti produttivi, commerciali e grandi nodi infrastrutturali.geojson",  color:"#e63946", fill:0.50, weight:1.5 },
   ];
+
   const RAW_BASE = "https://raw.githubusercontent.com/AreaGIS/cartografia-pescopennataro/main/";
 
+  // ── Mappa ─────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
-  // Pane separato per i GeoJSON: sono visibili ma non catturano i click.
+
+  // Pane separati: i layer GeoJSON stanno sotto, i rilievi fotografici sopra.
+  // Il pane GeoJSON non intercetta i click, quindi i popup dei rilievi restano sempre apribili.
   map.createPane("geojsonPane");
   map.getPane("geojsonPane").style.zIndex = 350;
   map.getPane("geojsonPane").style.pointerEvents = "none";
-  // I marker HTML standard restano nel markerPane, sempre sopra i layer poligonali.
-  map.getPane("markerPane").style.zIndex = 700;
-  map.getPane("markerPane").style.pointerEvents = "auto";
+
+  map.createPane("rilieviPane");
+  map.getPane("rilieviPane").style.zIndex = 650;
+  map.getPane("rilieviPane").style.pointerEvents = "auto";
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
-    maxZoom: 19
+    maxZoom: 19,
   }).addTo(map);
 
-  const rilievoIcon = L.divIcon({
-    className: "rilievo-marker",
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-    popupAnchor: [0, -8]
-  });
-  const markersLayer = L.layerGroup().addTo(map);
-
-  function ensurePopupFullyVisible() {
-    setTimeout(function() {
-      const popup = map._popup;
-      if (!popup || !popup._container) return;
-      const mapBox = map.getContainer().getBoundingClientRect();
-      const popBox = popup._container.getBoundingClientRect();
-      const padding = 26;
-      let dx = 0, dy = 0;
-      if (popBox.left < mapBox.left + padding) dx = popBox.left - mapBox.left - padding;
-      else if (popBox.right > mapBox.right - padding) dx = popBox.right - mapBox.right + padding;
-      if (popBox.top < mapBox.top + padding) dy = popBox.top - mapBox.top - padding;
-      else if (popBox.bottom > mapBox.bottom - padding) dy = popBox.bottom - mapBox.bottom + padding;
-      if (dx || dy) map.panBy([dx, dy], { animate: true, duration: 0.25 });
-    }, 80);
-  }
+  // ── Marker di rilievo ─────────────────────────────────────────────────────────
+  const markerStyle = {
+    radius:7,
+    fillColor:"#2d6a4f",
+    color:"#ffffff",
+    weight:2,
+    opacity:1,
+    fillOpacity:0.9,
+    pane:"rilieviPane"
+  };
 
   MARKERS.forEach(function(m) {
-    const popupContent =
+    const popup = L.popup({ maxWidth: 340 }).setContent(
       '<div class="popup-inner">' +
         '<div class="popup-row"><span class="popup-label">Data</span><span class="popup-val">' + m.date + '</span></div>' +
         '<div class="popup-row"><span class="popup-label">Altitudine</span><span class="popup-val">' + m.alt + ' m</span></div>' +
         '<div class="popup-row"><span class="popup-label">Punto</span><span class="popup-val">#' + m.id + '</span></div>' +
         '<div class="popup-photo"><img src="' + PHOTO_BASE + m.photo + '" loading="lazy" alt="Foto ' + m.id + '" ' +
-          'onload="if(window.__ensurePopup)window.__ensurePopup()" ' +
-          'onerror="this.style.display=&quot;none&quot;;this.parentNode.innerHTML=&quot;&lt;span class=\&quot;no-photo\&quot;&gt;Foto non disponibile&lt;/span&gt;&quot;" /></div>' +
-      '</div>';
-    const marker = L.marker([m.lat, m.lng], {
-      icon: rilievoIcon,
-      pane: "markerPane",
-      keyboard: true,
-      title: "Rilievo #" + m.id
-    }).bindPopup(L.popup({
-      maxWidth: 360,
-      autoPan: true,
-      keepInView: true,
-      autoPanPadding: L.point(70, 70)
-    }).setContent(popupContent));
-    marker.on("popupopen", ensurePopupFullyVisible);
-    marker.addTo(markersLayer);
+          'onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<span class=&quot;no-photo&quot;>Foto non disponibile</span>\'" /></div>' +
+      '</div>'
+    );
+    L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(popup).addTo(map);
   });
 
-  window.__ensurePopup = ensurePopupFullyVisible;
-  map.on("popupopen", ensurePopupFullyVisible);
-  window.addEventListener("resize", ensurePopupFullyVisible);
-
-  const layerCache = {};
-  const layerActive = {};
-  const DEFAULT_ON = ["limite"];
-
-  function bringMarkersFront() {
-    markersLayer.eachLayer(function(layer) {
-      if (layer.setZIndexOffset) layer.setZIndexOffset(10000);
-      if (layer.bringToFront) layer.bringToFront();
+  function bringRilieviToFront() {
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.CircleMarker && layer.bringToFront) layer.bringToFront();
     });
   }
+  bringRilieviToFront();
+
+  // ── Layer GeoJSON ─────────────────────────────────────────────────────────────
+  const layerCache  = {};
+  const layerActive = {};
+  const DEFAULT_ON  = ["limite"];
 
   function buildLayerList() {
     const container = document.getElementById("layer-list");
@@ -176,56 +342,65 @@
       layerActive[def.id] = false;
       const row = document.createElement("div");
       row.className = "layer-row";
-      row.innerHTML = '<div class="layer-checkbox" id="chk-' + def.id + '"><svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg></div><div class="layer-swatch" style="background:' + def.color + '"></div><span class="layer-name">' + def.name + '</span>';
+      row.innerHTML =
+        '<div class="layer-checkbox" id="chk-' + def.id + '">' +
+          '<svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>' +
+        '</div>' +
+        '<div class="layer-swatch" style="background:' + def.color + '"></div>' +
+        '<span class="layer-name">' + def.name + '</span>';
       row.onclick = function() { toggleLayer(def.id, def); };
       container.appendChild(row);
       if (DEFAULT_ON.includes(def.id)) toggleLayer(def.id, def);
     });
   }
 
-  function setCheck(id, def, active) {
-    const chk = document.getElementById("chk-" + id);
-    if (!chk) return;
-    chk.style.borderColor = active ? def.color : "#ccc";
-    chk.style.background = active ? def.color : "transparent";
-    const svg = chk.querySelector("svg");
-    if (svg) svg.style.display = active ? "block" : "none";
-  }
-
   function toggleLayer(id, def) {
-    if (!def) def = GEOJSON_LAYERS.find(function(l) { return l.id === id; });
+    if (!def) def = GEOJSON_LAYERS.find(function(l){ return l.id === id; });
     const nowActive = !layerActive[id];
     layerActive[id] = nowActive;
-    setCheck(id, def, nowActive);
+    const chk = document.getElementById("chk-" + id);
+    if (chk) {
+      chk.style.borderColor = nowActive ? def.color : "#ccc";
+      chk.style.background  = nowActive ? def.color : "transparent";
+      const svg = chk.querySelector("svg");
+      if (svg) svg.style.display = nowActive ? "block" : "none";
+    }
     if (nowActive) {
-      if (layerCache[id]) { map.addLayer(layerCache[id]); bringMarkersFront(); }
+      if (layerCache[id]) { map.addLayer(layerCache[id]); bringRilieviToFront(); }
       else {
         fetch(RAW_BASE + encodeURIComponent(def.file))
-          .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-          .then(function(gj) {
+          .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
+          .then(function(gj){
             const lyr = L.geoJSON(gj, {
-              pane: "geojsonPane",
-              interactive: false,
-              bubblingMouseEvents: false,
-              style: function() { return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill }; }
+              pane:"geojsonPane",
+              interactive:false,
+              bubblingMouseEvents:false,
+              style: function(){ return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill }; }
             });
             layerCache[id] = lyr;
-            if (layerActive[id]) { map.addLayer(lyr); bringMarkersFront(); }
+            if (layerActive[id]) {
+              map.addLayer(lyr);
+              bringRilieviToFront();
+            }
           })
-          .catch(function(e) { console.warn("GeoJSON fetch failed:", id, e); });
+          .catch(function(e){ console.warn("GeoJSON fetch failed:", id, e); });
       }
-    } else if (layerCache[id]) { map.removeLayer(layerCache[id]); }
+    } else {
+      if (layerCache[id]) map.removeLayer(layerCache[id]);
+    }
     updateBulkButtons();
-    bringMarkersFront();
+    bringRilieviToFront();
   }
 
-  function selectAll() { GEOJSON_LAYERS.forEach(function(d) { if (!layerActive[d.id]) toggleLayer(d.id, d); }); }
-  function selectNone() { GEOJSON_LAYERS.forEach(function(d) { if (layerActive[d.id]) toggleLayer(d.id, d); }); }
+  function selectAll()  { GEOJSON_LAYERS.forEach(function(d){ if (!layerActive[d.id]) toggleLayer(d.id, d); }); }
+  function selectNone() { GEOJSON_LAYERS.forEach(function(d){ if ( layerActive[d.id]) toggleLayer(d.id, d); }); }
+
   function updateBulkButtons() {
-    document.getElementById("btn-all").disabled = GEOJSON_LAYERS.every(function(l) { return layerActive[l.id]; });
-    document.getElementById("btn-none").disabled = GEOJSON_LAYERS.every(function(l) { return !layerActive[l.id]; });
+    document.getElementById("btn-all").disabled  = GEOJSON_LAYERS.every(function(l){ return  layerActive[l.id]; });
+    document.getElementById("btn-none").disabled = GEOJSON_LAYERS.every(function(l){ return !layerActive[l.id]; });
   }
 
+  // ── Toggle pannello layer ─────────────────────────────────────────────────────
   let panelVisible = true;
   function togglePanel() {
     panelVisible = !panelVisible;
@@ -234,15 +409,20 @@
   }
   document.getElementById("btn-toggle").classList.add("active");
 
+  // ── Modale informazioni ───────────────────────────────────────────────────────
   let infoVisible = false;
-  function toggleInfo() { infoVisible = !infoVisible; document.getElementById("info-overlay").classList.toggle("visible", infoVisible); }
-  function closeInfoOnOverlay(e) { if (e.target === document.getElementById("info-overlay")) toggleInfo(); }
-  document.addEventListener("keydown", function(e) { if (e.key === "Escape" && infoVisible) toggleInfo(); });
+  function toggleInfo() {
+    infoVisible = !infoVisible;
+    document.getElementById("info-overlay").classList.toggle("visible", infoVisible);
+  }
+  function closeInfoOnOverlay(e) {
+    if (e.target === document.getElementById("info-overlay")) toggleInfo();
+  }
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && infoVisible) toggleInfo(); });
 
+  // ── Avvio ─────────────────────────────────────────────────────────────────────
   buildLayerList();
   updateBulkButtons();
-  bringMarkersFront();
-</script>
+  </script>
 </body>
 </html>
-
