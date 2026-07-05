@@ -37,6 +37,22 @@
   // ── Mappa ─────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
 
+  // Correzione robusta click marker/layer:
+  // i layer cartografici sono solo visuali e non devono mai catturare il click;
+  // i rilievi sono messi in un pane sopra tutti gli overlay.
+  const clickFixStyle = document.createElement("style");
+  clickFixStyle.textContent = `
+    .leaflet-geojson-pane,
+    .leaflet-geojson-pane svg,
+    .leaflet-geojson-pane path,
+    .leaflet-geojson-pane canvas { pointer-events: none !important; }
+    .leaflet-rilievi-pane { z-index: 2000 !important; pointer-events: auto !important; }
+    .leaflet-rilievi-pane .leaflet-marker-icon,
+    .leaflet-rilievi-pane .rilievo-div-marker,
+    .leaflet-rilievi-pane .rilievo-hit { pointer-events: auto !important; cursor: pointer; }
+  `;
+  document.head.appendChild(clickFixStyle);
+
   // Pane dedicati: tutti i layer GeoJSON restano sotto, i rilievi sopra.
   // Inoltre il pane GeoJSON non intercetta i click: un rilievo resta cliccabile
   // anche quando ricade dentro qualunque poligono/layer attivo.
@@ -44,9 +60,9 @@
   map.getPane("geojsonPane").style.zIndex = 350;
   map.getPane("geojsonPane").style.pointerEvents = "none";
   map.createPane("rilieviPane");
-  map.getPane("rilieviPane").style.zIndex = 1000;
+  map.getPane("rilieviPane").style.zIndex = 2000;
   map.getPane("rilieviPane").style.pointerEvents = "auto";
-  map.getPane("markerPane").style.zIndex = 1100;
+  map.getPane("markerPane").style.zIndex = 2100;
   map.getPane("markerPane").style.pointerEvents = "auto";
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -126,20 +142,34 @@
       '</div>'
     );
     L.marker([m.lat, m.lng], {
-      pane: "markerPane",
+      pane: "rilieviPane",
       interactive: true,
       keyboard: true,
-      zIndexOffset: 10000,
+      riseOnHover: true,
+      zIndexOffset: 100000,
       icon: L.divIcon({
         className: "rilievo-div-marker",
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        popupAnchor: [0, -10],
-        html: '<span style="display:block;width:14px;height:14px;border-radius:50%;background:#2d6a4f;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);pointer-events:auto;"></span>'
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -18],
+        html: '<span class="rilievo-hit" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0);pointer-events:auto;cursor:pointer;"><span style="display:block;width:14px;height:14px;border-radius:50%;background:#2d6a4f;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);pointer-events:none;"></span></span>'
       })
     }).bindPopup(popup).addTo(rilieviLayer);
   });
   bringRilieviToFront();
+
+  // Fallback: anche se un browser intercetta il click su un overlay SVG,
+  // apriamo il popup del rilievo piu vicino al punto cliccato.
+  map.on("click", function(e) {
+    let nearest = null;
+    let nearestDist = Infinity;
+    rilieviLayer.eachLayer(function(layer) {
+      const p = map.latLngToContainerPoint(layer.getLatLng());
+      const d = p.distanceTo(e.containerPoint);
+      if (d < nearestDist) { nearestDist = d; nearest = layer; }
+    });
+    if (nearest && nearestDist <= 18) nearest.openPopup();
+  });
 
   // ── Layer GeoJSON ─────────────────────────────────────────────────────────────
   const layerCache  = {};
@@ -165,6 +195,11 @@
   }
 
   function disableGeoJsonPointerEvents(layer) {
+    const pane = map.getPane("geojsonPane");
+    if (pane) {
+      pane.style.pointerEvents = "none";
+      pane.querySelectorAll("svg,path,canvas").forEach(function(el){ el.style.pointerEvents = "none"; });
+    }
     if (!layer || !layer.eachLayer) return;
     layer.eachLayer(function(child) {
       if (child.options) {
