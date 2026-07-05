@@ -13,7 +13,7 @@
     /* ── Floating buttons (top-left) ── */
     #btn-toggle, #btn-info {
       position: fixed;
-      top: 16px;
+      left: 16px;
       z-index: 1001;
       display: flex;
       align-items: center;
@@ -28,8 +28,8 @@
       color: #2d6a4f;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
-    #btn-toggle { left: 16px; }
-    #btn-info   { left: 64px; font-size: 16px; font-weight: 700; font-style: italic; letter-spacing: -0.5px; }
+    #btn-info   { top: 16px; font-size: 16px; font-weight: 700; font-style: italic; letter-spacing: -0.5px; }
+    #btn-toggle { top: 64px; }
     #btn-toggle:hover, #btn-info:hover { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
     #btn-toggle.active { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
 
@@ -37,7 +37,7 @@
     #panel {
       position: fixed;
       top: 16px;
-      left: 112px;
+      left: 64px;
       z-index: 1000;
       width: 276px;
       max-height: calc(100dvh - 32px);
