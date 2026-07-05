@@ -7,16 +7,13 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body { font-family: system-ui, -apple-system, sans-serif; background: #f5f0ea; }
-
     #map { position: fixed; inset: 0; z-index: 0; }
 
-    /* ── Toggle button ── */
-    #btn-toggle {
+    /* ── Floating buttons (top-left) ── */
+    #btn-toggle, #btn-info {
       position: fixed;
       top: 16px;
-      left: 16px;
       z-index: 1001;
       display: flex;
       align-items: center;
@@ -29,19 +26,21 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       cursor: pointer;
       color: #2d6a4f;
-      transition: background 0.15s, color 0.15s;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
-    #btn-toggle:hover { background: #2d6a4f; color: #fff; }
-    #btn-toggle svg { pointer-events: none; }
+    #btn-toggle { left: 16px; }
+    #btn-info   { left: 64px; font-size: 16px; font-weight: 700; font-style: italic; letter-spacing: -0.5px; }
+    #btn-toggle:hover, #btn-info:hover { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
+    #btn-toggle.active { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
 
     /* ── Control panel ── */
     #panel {
       position: fixed;
       top: 16px;
-      left: 64px;
+      left: 112px;
       z-index: 1000;
       width: 276px;
-      max-height: calc(100dvh - 56px);
+      max-height: calc(100dvh - 32px);
       background: #ffffff;
       border: 1px solid #d1c9bf;
       border-radius: 10px;
@@ -51,11 +50,7 @@
       overflow: hidden;
       transition: opacity 0.2s, transform 0.2s;
     }
-    #panel.hidden {
-      opacity: 0;
-      pointer-events: none;
-      transform: translateX(-8px);
-    }
+    #panel.hidden { opacity: 0; pointer-events: none; transform: translateX(-8px); }
 
     .panel-header {
       padding: 14px 16px;
@@ -65,111 +60,96 @@
     }
     .panel-header h1 { font-size: 13px; font-weight: 700; color: #1a1a1a; }
     .panel-header p  { font-size: 11px; color: #6b6459; margin-top: 2px; }
-
-    .panel-body {
-      overflow-y: auto;
-      flex: 1;
-      padding: 14px 16px;
-    }
-
+    .panel-body { overflow-y: auto; flex: 1; padding: 14px 16px; }
     .section-title {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #1a1a1a;
-      margin-bottom: 10px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #1a1a1a; margin-bottom: 10px;
     }
 
-    /* Bulk buttons */
     .bulk-btns { display: flex; gap: 6px; margin-bottom: 12px; }
     .bulk-btn {
-      font-size: 10px;
-      padding: 3px 10px;
-      border-radius: 4px;
-      border: 1px solid #d1c9bf;
-      background: #f5f0ea;
-      color: #3d3530;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      font-size: 10px; padding: 3px 10px; border-radius: 4px;
+      border: 1px solid #d1c9bf; background: #f5f0ea; color: #3d3530;
+      cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
     .bulk-btn:hover { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
     .bulk-btn.danger:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
     .bulk-btn:disabled { opacity: 0.4; cursor: default; }
     .bulk-btn:disabled:hover { background: #f5f0ea; color: #3d3530; border-color: #d1c9bf; }
 
-    /* Layer rows */
-    .layer-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 0;
-      cursor: pointer;
-    }
+    .layer-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
     .layer-row:hover .layer-name { color: #2d6a4f; }
-
     .layer-checkbox {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      border: 2px solid #ccc;
-      flex-shrink: 0;
-      transition: background 0.15s, border-color 0.15s;
+      width: 14px; height: 14px; border-radius: 3px; border: 2px solid #ccc;
+      flex-shrink: 0; transition: background 0.15s, border-color 0.15s;
       display: flex; align-items: center; justify-content: center;
     }
-    .layer-checkbox.checked svg { display: block; }
     .layer-checkbox svg { display: none; width: 9px; height: 9px; }
-
-    .layer-swatch {
-      width: 12px; height: 12px;
-      border-radius: 3px;
-      flex-shrink: 0;
-      opacity: 0.85;
-    }
+    .layer-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; opacity: 0.85; }
     .layer-name { font-size: 11.5px; color: #2d2d2d; line-height: 1.35; flex: 1; }
 
-    /* ── Stats bar ── */
-    #stats-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      z-index: 1000;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(4px);
-      border-top: 1px solid #e8e2da;
-      padding: 6px 16px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 11px;
-      color: #6b6459;
+    /* ── Info modal ── */
+    #info-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
     }
-    #stats-bar strong { color: #1a1a1a; font-weight: 600; }
-    .stats-sep { width: 1px; height: 14px; background: #d1c9bf; }
+    #info-overlay.visible { opacity: 1; pointer-events: auto; }
+    #info-modal {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+      width: 90%;
+      max-width: 480px;
+      padding: 28px 28px 24px;
+      position: relative;
+      transform: translateY(8px);
+      transition: transform 0.2s;
+    }
+    #info-overlay.visible #info-modal { transform: translateY(0); }
+    #info-modal h2 {
+      font-size: 15px; font-weight: 700; color: #1a1a1a;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 1px solid #e8e2da;
+      display: flex; align-items: center; gap: 10px;
+    }
+    #info-modal h2 .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #2d6a4f; color: #fff;
+      font-size: 13px; font-weight: 700; font-style: italic;
+      flex-shrink: 0;
+    }
+    #info-modal p {
+      font-size: 13px; color: #3d3530; line-height: 1.65;
+      margin-bottom: 12px;
+    }
+    #info-modal p:last-of-type { margin-bottom: 0; }
+    #btn-close-info {
+      position: absolute; top: 14px; right: 14px;
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1px solid #e8e2da; background: #f5f0ea;
+      cursor: pointer; color: #6b6459; font-size: 16px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    #btn-close-info:hover { background: #2d6a4f; color: #fff; border-color: #2d6a4f; }
 
-    /* Leaflet popup tweaks */
+    /* ── Popup ── */
     .leaflet-popup-content { margin: 0; }
-    .popup-inner {
-      padding: 10px 12px;
-      min-width: 220px;
-    }
+    .popup-inner { padding: 10px 12px; min-width: 220px; }
     .popup-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      padding: 4px 0;
-      border-bottom: 1px solid #f0ebe4;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; padding: 4px 0; border-bottom: 1px solid #f0ebe4;
     }
     .popup-row:last-of-type { border-bottom: none; }
     .popup-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9e9080; }
     .popup-val   { font-size: 12px; font-weight: 500; color: #1a1a1a; }
     .popup-photo {
-      width: 300px;
-      margin-top: 8px;
-      border-radius: 4px;
-      overflow: hidden;
-      background: #f5f0ea;
-      min-height: 80px;
+      width: 300px; margin-top: 8px; border-radius: 4px; overflow: hidden;
+      background: #f5f0ea; min-height: 80px;
       display: flex; align-items: center; justify-content: center;
     }
     .popup-photo img { width: 100%; height: auto; display: block; }
@@ -180,13 +160,17 @@
 
   <div id="map"></div>
 
-  <!-- Toggle button -->
-  <button id="btn-toggle" title="Legenda e layer" onclick="togglePanel()">
+  <!-- Layers toggle button -->
+  <button id="btn-toggle" title="Mostra/nascondi layer" onclick="togglePanel()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+      <polyline points="2 17 12 22 22 17"/>
+      <polyline points="2 12 12 17 22 12"/>
     </svg>
   </button>
+
+  <!-- Info button -->
+  <button id="btn-info" title="Informazioni" onclick="toggleInfo()">i</button>
 
   <!-- Control panel -->
   <div id="panel">
@@ -197,20 +181,25 @@
     <div class="panel-body">
       <div class="section-title">Layer GeoJSON</div>
       <div class="bulk-btns">
-        <button class="bulk-btn" id="btn-all"     onclick="selectAll()">Tutti</button>
+        <button class="bulk-btn" id="btn-all"  onclick="selectAll()">Tutti</button>
         <button class="bulk-btn danger" id="btn-none" onclick="selectNone()">Nessuno</button>
       </div>
       <div id="layer-list"></div>
     </div>
   </div>
 
-  <!-- Stats bar -->
-  <div id="stats-bar">
-    <span><strong>36</strong> punti di rilievo</span>
-    <div class="stats-sep"></div>
-    <span>Altitudine: <strong>1281m — 1476m</strong></span>
-    <div class="stats-sep"></div>
-    <span>02/11/2025 &nbsp;·&nbsp; 07/11/2025</span>
+  <!-- Info modal -->
+  <div id="info-overlay" onclick="closeInfoOnOverlay(event)">
+    <div id="info-modal">
+      <button id="btn-close-info" onclick="toggleInfo()" title="Chiudi">&#x2715;</button>
+      <h2>
+        <span class="badge">i</span>
+        Informazioni
+      </h2>
+      <p>Mappa dei ritrovamenti micologici nel territorio di Pescopennataro (Molise, Italy), realizzata per documentare e visualizzare le osservazioni georeferenziate delle specie fungine presenti nell&rsquo;area.</p>
+      <p>Raccolta georeferenziata dei ritrovamenti micologici nel territorio di Pescopennataro, Molise (Italy).</p>
+      <p>Mappa interattiva dei funghi osservati a Pescopennataro, nel cuore del Molise.</p>
+    </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -258,55 +247,46 @@
   ];
 
   const GEOJSON_LAYERS = [
-    { id:"limite",           name:"Limite amministrativo",            file:"Pescopennataro - Limite amministrativo.geojson", color:"#1a1a2e", fill:0.05, weight:2.5 },
-    { id:"faggete",          name:"Faggete Italia meridionale",        file:"Faggete dell\u2019Italia meridionale.geojson",                  color:"#1b4332", fill:0.45, weight:1 },
-    { id:"abetine",          name:"Abetine App. centrale e merid.",    file:"Abetine dell\u2019Appennino centrale e meridionale.geojson",     color:"#081c15", fill:0.45, weight:1 },
-    { id:"ostrya",           name:"Boschi di Ostrya carpinifolia",     file:"Boschi di Ostrya carpinifolia.geojson",                         color:"#2d6a4f", fill:0.45, weight:1 },
-    { id:"conifere",         name:"Boschi conifere alloctone",         file:"Boschi di conifere alloctone o fuori dal loro areale.geojson",  color:"#40916c", fill:0.45, weight:1 },
-    { id:"pioppi",           name:"Boschi ripariali a pioppi",         file:"Boschi ripariali a pioppi.geojson",                             color:"#52b788", fill:0.45, weight:1 },
-    { id:"salici",           name:"Boschi ripariali di salici",        file:"Boschi ripariali temperati di salici.geojson",                  color:"#74c69d", fill:0.45, weight:1 },
-    { id:"querceti",         name:"Querceti temperati a cerro",        file:"Querceti temperati a cerro.geojson",                            color:"#7b4f12", fill:0.45, weight:1 },
-    { id:"cespuglieti",      name:"Cespuglieti a latifoglie decidue",  file:"Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson", color:"#a7c957", fill:0.45, weight:1 },
-    { id:"ginepreti",        name:"Ginepreti collinari e montani",     file:"Ginepreti collinari e montani.geojson",                         color:"#606c38", fill:0.45, weight:1 },
-    { id:"prat-sfalcio",     name:"Praterie da sfalcio",               file:"Praterie da sfalcio planiziali, collinari e montane.geojson",   color:"#a8dadc", fill:0.45, weight:1 },
-    { id:"prat-mesiche",     name:"Praterie mesiche temperate",        file:"Praterie mesiche temperate e supramediterranee.geojson",         color:"#57cc99", fill:0.45, weight:1 },
-    { id:"prat-mesofile",    name:"Praterie mesofile pascolate",       file:"Praterie mesofile pascolate.geojson",                           color:"#80b918", fill:0.45, weight:1 },
-    { id:"prat-xeriche",     name:"Praterie xeriche Italia C-M",       file:"Praterie xeriche dell\u2019Italia centrale e meridionale.geojson", color:"#d4e157", fill:0.45, weight:1 },
-    { id:"colture",          name:"Colture estensive",                 file:"Colture estensive.geojson",                                     color:"#e9c46a", fill:0.45, weight:1 },
-    { id:"rupi",             name:"Rupi carbonatiche",                 file:"Rupi carbonatiche dei rilievi del Mediterraneo occidentale.geojson", color:"#9e9e9e", fill:0.45, weight:1 },
-    { id:"centri",           name:"Centri abitati e infrastrutture",   file:"Centri abitati e infrastrutture viarie e ferroviarie.geojson",  color:"#6b705c", fill:0.50, weight:1.5 },
-    { id:"siti",             name:"Siti produttivi e commerciali",     file:"Siti produttivi, commerciali e grandi nodi infrastrutturali.geojson", color:"#e63946", fill:0.50, weight:1.5 },
+    { id:"limite",        name:"Limite amministrativo",           file:"Pescopennataro - Limite amministrativo.geojson",                            color:"#1a1a2e", fill:0.05, weight:2.5 },
+    { id:"faggete",       name:"Faggete Italia meridionale",       file:"Faggete dell\u2019Italia meridionale.geojson",                              color:"#1b4332", fill:0.45, weight:1   },
+    { id:"abetine",       name:"Abetine App. centrale e merid.",   file:"Abetine dell\u2019Appennino centrale e meridionale.geojson",                color:"#081c15", fill:0.45, weight:1   },
+    { id:"ostrya",        name:"Boschi di Ostrya carpinifolia",    file:"Boschi di Ostrya carpinifolia.geojson",                                     color:"#2d6a4f", fill:0.45, weight:1   },
+    { id:"conifere",      name:"Boschi conifere alloctone",        file:"Boschi di conifere alloctone o fuori dal loro areale.geojson",              color:"#40916c", fill:0.45, weight:1   },
+    { id:"pioppi",        name:"Boschi ripariali a pioppi",        file:"Boschi ripariali a pioppi.geojson",                                         color:"#52b788", fill:0.45, weight:1   },
+    { id:"salici",        name:"Boschi ripariali di salici",       file:"Boschi ripariali temperati di salici.geojson",                              color:"#74c69d", fill:0.45, weight:1   },
+    { id:"querceti",      name:"Querceti temperati a cerro",       file:"Querceti temperati a cerro.geojson",                                        color:"#7b4f12", fill:0.45, weight:1   },
+    { id:"cespuglieti",   name:"Cespuglieti a latifoglie decidue", file:"Cespuglieti temperati a latifoglie decidue dei suoli ricchi.geojson",       color:"#a7c957", fill:0.45, weight:1   },
+    { id:"ginepreti",     name:"Ginepreti collinari e montani",    file:"Ginepreti collinari e montani.geojson",                                     color:"#606c38", fill:0.45, weight:1   },
+    { id:"prat-sfalcio",  name:"Praterie da sfalcio",              file:"Praterie da sfalcio planiziali, collinari e montane.geojson",               color:"#a8dadc", fill:0.45, weight:1   },
+    { id:"prat-mesiche",  name:"Praterie mesiche temperate",       file:"Praterie mesiche temperate e supramediterranee.geojson",                    color:"#57cc99", fill:0.45, weight:1   },
+    { id:"prat-mesofile", name:"Praterie mesofile pascolate",      file:"Praterie mesofile pascolate.geojson",                                       color:"#80b918", fill:0.45, weight:1   },
+    { id:"prat-xeriche",  name:"Praterie xeriche Italia C-M",      file:"Praterie xeriche dell\u2019Italia centrale e meridionale.geojson",          color:"#d4e157", fill:0.45, weight:1   },
+    { id:"colture",       name:"Colture estensive",                file:"Colture estensive.geojson",                                                 color:"#e9c46a", fill:0.45, weight:1   },
+    { id:"rupi",          name:"Rupi carbonatiche",                file:"Rupi carbonatiche dei rilievi del Mediterraneo occidentale.geojson",        color:"#9e9e9e", fill:0.45, weight:1   },
+    { id:"centri",        name:"Centri abitati e infrastrutture",  file:"Centri abitati e infrastrutture viarie e ferroviarie.geojson",              color:"#6b705c", fill:0.50, weight:1.5 },
+    { id:"siti",          name:"Siti produttivi e commerciali",    file:"Siti produttivi, commerciali e grandi nodi infrastrutturali.geojson",       color:"#e63946", fill:0.50, weight:1.5 },
   ];
 
   const RAW_BASE = "https://raw.githubusercontent.com/AreaGIS/cartografia-pescopennataro/main/";
 
-  // ── Map init ─────────────────────────────────────────────────────────────────
+  // ── Map ───────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
   L.control.zoom({ position: "bottomright" }).addTo(map);
-
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
     maxZoom: 19,
   }).addTo(map);
 
-  // ── Survey markers ────────────────────────────────────────────────────────────
-  const markerStyle = {
-    radius: 7,
-    fillColor: "#2d6a4f",
-    color: "#ffffff",
-    weight: 2,
-    opacity: 1,
-    fillOpacity: 0.9,
-  };
+  // ── Markers ───────────────────────────────────────────────────────────────────
+  const markerStyle = { radius:7, fillColor:"#2d6a4f", color:"#ffffff", weight:2, opacity:1, fillOpacity:0.9 };
 
   MARKERS.forEach(function(m) {
-    const photoUrl = PHOTO_BASE + m.photo;
-    const popup = L.popup({ maxWidth: 340, className: "survey-popup" }).setContent(
+    const popup = L.popup({ maxWidth: 340 }).setContent(
       '<div class="popup-inner">' +
         '<div class="popup-row"><span class="popup-label">Data</span><span class="popup-val">' + m.date + '</span></div>' +
         '<div class="popup-row"><span class="popup-label">Altitudine</span><span class="popup-val">' + m.alt + ' m</span></div>' +
         '<div class="popup-row"><span class="popup-label">Punto</span><span class="popup-val">#' + m.id + '</span></div>' +
-        '<div class="popup-photo"><img src="' + photoUrl + '" loading="lazy" alt="Foto punto ' + m.id + '" ' +
+        '<div class="popup-photo"><img src="' + PHOTO_BASE + m.photo + '" loading="lazy" alt="Foto ' + m.id + '" ' +
           'onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<span class=&quot;no-photo&quot;>Foto non disponibile</span>\'" /></div>' +
       '</div>'
     );
@@ -314,18 +294,14 @@
   });
 
   // ── GeoJSON layers ────────────────────────────────────────────────────────────
-  const layerCache   = {};  // id -> L.GeoJSON instance (cached after first fetch)
-  const layerActive  = {};  // id -> boolean
-
-  // Default: only the administrative boundary is active
-  const DEFAULT_ACTIVE = ["limite"];
+  const layerCache  = {};
+  const layerActive = {};
+  const DEFAULT_ON  = ["limite"];
 
   function buildLayerList() {
     const container = document.getElementById("layer-list");
     GEOJSON_LAYERS.forEach(function(def) {
-      const isActive = DEFAULT_ACTIVE.includes(def.id);
-      layerActive[def.id] = false; // will be set in toggleLayer below
-
+      layerActive[def.id] = false;
       const row = document.createElement("div");
       row.className = "layer-row";
       row.innerHTML =
@@ -336,8 +312,7 @@
         '<span class="layer-name">' + def.name + '</span>';
       row.onclick = function() { toggleLayer(def.id, def); };
       container.appendChild(row);
-
-      if (isActive) toggleLayer(def.id, def);
+      if (DEFAULT_ON.includes(def.id)) toggleLayer(def.id, def);
     });
   }
 
@@ -345,73 +320,60 @@
     if (!def) def = GEOJSON_LAYERS.find(function(l){ return l.id === id; });
     const nowActive = !layerActive[id];
     layerActive[id] = nowActive;
-
     const chk = document.getElementById("chk-" + id);
     if (chk) {
-      chk.style.borderColor  = nowActive ? def.color : "#ccc";
-      chk.style.background   = nowActive ? def.color : "transparent";
+      chk.style.borderColor = nowActive ? def.color : "#ccc";
+      chk.style.background  = nowActive ? def.color : "transparent";
       const svg = chk.querySelector("svg");
       if (svg) svg.style.display = nowActive ? "block" : "none";
     }
-
     if (nowActive) {
-      if (layerCache[id]) {
-        map.addLayer(layerCache[id]);
-      } else {
-        const url = RAW_BASE + encodeURIComponent(def.file);
-        fetch(url)
+      if (layerCache[id]) { map.addLayer(layerCache[id]); }
+      else {
+        fetch(RAW_BASE + encodeURIComponent(def.file))
           .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
-          .then(function(geojson){
-            const layer = L.geoJSON(geojson, {
-              style: function() {
-                return {
-                  color:       def.color,
-                  weight:      def.weight,
-                  opacity:     0.9,
-                  fillColor:   def.color,
-                  fillOpacity: def.fill,
-                };
-              },
-            });
-            layerCache[id] = layer;
-            // Only add if still active (user may have toggled off during fetch)
-            if (layerActive[id]) map.addLayer(layer);
+          .then(function(gj){
+            const lyr = L.geoJSON(gj, { style: function(){ return { color:def.color, weight:def.weight, opacity:0.9, fillColor:def.color, fillOpacity:def.fill }; } });
+            layerCache[id] = lyr;
+            if (layerActive[id]) map.addLayer(lyr);
           })
-          .catch(function(err){ console.warn("GeoJSON fetch failed for", id, err); });
+          .catch(function(e){ console.warn("GeoJSON fetch failed:", id, e); });
       }
     } else {
       if (layerCache[id]) map.removeLayer(layerCache[id]);
     }
-
     updateBulkButtons();
   }
 
-  function selectAll() {
-    GEOJSON_LAYERS.forEach(function(def){
-      if (!layerActive[def.id]) toggleLayer(def.id, def);
-    });
-  }
-
-  function selectNone() {
-    GEOJSON_LAYERS.forEach(function(def){
-      if (layerActive[def.id]) toggleLayer(def.id, def);
-    });
-  }
+  function selectAll()  { GEOJSON_LAYERS.forEach(function(d){ if (!layerActive[d.id]) toggleLayer(d.id, d); }); }
+  function selectNone() { GEOJSON_LAYERS.forEach(function(d){ if (layerActive[d.id])  toggleLayer(d.id, d); }); }
 
   function updateBulkButtons() {
-    const allOn  = GEOJSON_LAYERS.every(function(l){ return layerActive[l.id]; });
-    const noneOn = GEOJSON_LAYERS.every(function(l){ return !layerActive[l.id]; });
-    document.getElementById("btn-all").disabled  = allOn;
-    document.getElementById("btn-none").disabled = noneOn;
+    document.getElementById("btn-all").disabled  = GEOJSON_LAYERS.every(function(l){ return  layerActive[l.id]; });
+    document.getElementById("btn-none").disabled = GEOJSON_LAYERS.every(function(l){ return !layerActive[l.id]; });
   }
 
   // ── Panel toggle ──────────────────────────────────────────────────────────────
   let panelVisible = true;
-
   function togglePanel() {
     panelVisible = !panelVisible;
     document.getElementById("panel").classList.toggle("hidden", !panelVisible);
+    document.getElementById("btn-toggle").classList.toggle("active", panelVisible);
   }
+  // Start with panel visible and button highlighted
+  document.getElementById("btn-toggle").classList.add("active");
+
+  // ── Info modal ────────────────────────────────────────────────────────────────
+  let infoVisible = false;
+  function toggleInfo() {
+    infoVisible = !infoVisible;
+    document.getElementById("info-overlay").classList.toggle("visible", infoVisible);
+  }
+  function closeInfoOnOverlay(e) {
+    if (e.target === document.getElementById("info-overlay")) toggleInfo();
+  }
+  // Close with Escape key
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && infoVisible) toggleInfo(); });
 
   // ── Init ──────────────────────────────────────────────────────────────────────
   buildLayerList();
