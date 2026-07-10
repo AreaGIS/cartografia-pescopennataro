@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rilievo Pescopennataro</title>
+  <title>WebGIS Pescopennataro - Rilievi fotografici</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -159,6 +159,46 @@
     }
     .popup-photo img { width: 100%; height: auto; display: block; }
     .popup-photo .no-photo { font-size: 11px; color: #9e9080; font-style: italic; padding: 20px; }
+
+
+    .panel-section { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #e8e2da; }
+    .panel-section:last-child { border-bottom: none; }
+    .basemap-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .basemap-card {
+      border: 1px solid #d1c9bf; border-radius: 8px; overflow: hidden; cursor: pointer;
+      background: #fff; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    .basemap-card:hover { border-color: #2d6a4f; transform: translateY(-1px); }
+    .basemap-card.active { border-color: #2d6a4f; box-shadow: 0 0 0 2px rgba(45,106,79,0.18); }
+    .basemap-preview { height: 52px; border-bottom: 1px solid #e8e2da; }
+    .basemap-preview.osm { background: linear-gradient(135deg, #e8f0d8 0%, #e8f0d8 34%, #c7dfb3 35%, #c7dfb3 58%, #f0e2c0 59%); }
+    .basemap-preview.sat { background: radial-gradient(circle at 30% 30%, #547d43 0%, #315b33 35%, #223f2a 70%, #496246 100%); }
+    .basemap-label { display: flex; align-items: center; gap: 5px; padding: 7px 8px; font-size: 11px; color: #2d2d2d; }
+    .basemap-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #b9b0a5; }
+    .basemap-card.active .basemap-dot { border-color: #2d6a4f; background: #2d6a4f; box-shadow: inset 0 0 0 2px #fff; }
+    .search-box { width: 100%; border: 1px solid #d1c9bf; border-radius: 7px; padding: 8px 9px; font-size: 12px; outline: none; }
+    .search-box:focus { border-color: #2d6a4f; box-shadow: 0 0 0 2px rgba(45,106,79,0.12); }
+    .search-hint { margin-top: 6px; font-size: 10.5px; color: #6b6459; line-height: 1.35; }
+
+    /* ── Versione 2: legenda, foto fullscreen, avvisi ── */
+    .legend-list { display: flex; flex-direction: column; gap: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #2d2d2d; line-height: 1.25; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.12); flex-shrink: 0; }
+    .panel-footer { font-size: 10px; color: #8a8178; line-height: 1.35; padding-top: 10px; }
+    #photo-overlay {
+      position: fixed; inset: 0; z-index: 2500; background: rgba(0,0,0,0.82);
+      display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none;
+      transition: opacity 0.18s; padding: 24px;
+    }
+    #photo-overlay.visible { opacity: 1; pointer-events: auto; }
+    #photo-modal-img { max-width: min(1100px, 94vw); max-height: 88vh; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.45); background: #fff; }
+    #photo-close {
+      position: fixed; top: 18px; right: 18px; width: 38px; height: 38px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.14); color: #fff;
+      cursor: pointer; font-size: 22px; line-height: 1;
+    }
+    .popup-photo img { cursor: zoom-in; }
+
   </style>
 </head>
 <body>
@@ -192,16 +232,45 @@
   <!-- Pannello layer -->
   <div id="panel">
     <div class="panel-header">
-      <h1>Rilievo Pescopennataro</h1>
+      <h1>WebGIS Pescopennataro</h1>
       <p>36 punti &nbsp;|&nbsp; 2 sessioni di campo</p>
     </div>
     <div class="panel-body">
-      <div class="section-title">Layer GeoJSON</div>
-      <div class="bulk-btns">
-        <button class="bulk-btn" id="btn-all"  onclick="selectAll()">Tutti</button>
-        <button class="bulk-btn danger" id="btn-none" onclick="selectNone()">Nessuno</button>
+      <div class="panel-section">
+        <div class="section-title">Base cartografica</div>
+        <div class="basemap-options">
+          <div class="basemap-card active" id="base-osm" onclick="setBasemap('osm')">
+            <div class="basemap-preview osm"></div>
+            <div class="basemap-label"><span class="basemap-dot"></span> Mappa</div>
+          </div>
+          <div class="basemap-card" id="base-sat" onclick="setBasemap('satellite')">
+            <div class="basemap-preview sat"></div>
+            <div class="basemap-label"><span class="basemap-dot"></span> Satellite</div>
+          </div>
+        </div>
       </div>
-      <div id="layer-list"></div>
+
+      <div class="panel-section">
+        <div class="section-title">Cerca rilievo</div>
+        <input class="search-box" id="search-point" type="search" placeholder="Es. 27 oppure 07/11/2025" onkeydown="handleSearchKey(event)">
+        <div class="search-hint">Premi Invio per andare al primo punto trovato.</div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">Layer GeoJSON</div>
+        <div class="bulk-btns">
+          <button class="bulk-btn" id="btn-all"  onclick="selectAll()">Tutti</button>
+          <button class="bulk-btn danger" id="btn-none" onclick="selectNone()">Nessuno</button>
+        </div>
+        <div id="layer-list"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-title">Legenda</div>
+        <div class="legend-list" id="legend-list"></div>
+      </div>
+
+      <div class="panel-footer">Versione 2.0 · pronta per pubblicazione web</div>
     </div>
   </div>
 
@@ -214,6 +283,12 @@
       <p>Raccolta georeferenziata dei ritrovamenti micologici nel territorio di Pescopennataro, Molise (Italy).</p>
       <p>Mappa interattiva dei funghi osservati a Pescopennataro, nel cuore del Molise.</p>
     </div>
+  </div>
+
+  <!-- Visualizzatore foto a schermo intero -->
+  <div id="photo-overlay" onclick="closePhotoOverlay(event)">
+    <button id="photo-close" onclick="closePhotoOverlay(event)" title="Chiudi">&times;</button>
+    <img id="photo-modal-img" alt="Foto rilievo" />
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -284,6 +359,7 @@
 
   // ── Mappa ─────────────────────────────────────────────────────────────────────
   const map = L.map("map", { zoomControl: false }).setView([41.86, 14.29], 14);
+  L.control.scale({ imperial: false, metric: true }).addTo(map);
 
   // Pane separati: i layer GeoJSON stanno sotto, i rilievi fotografici sopra.
   // Il pane GeoJSON non intercetta i click, quindi i popup dei rilievi restano sempre apribili.
@@ -295,10 +371,35 @@
   map.getPane("rilieviPane").style.zIndex = 650;
   map.getPane("rilieviPane").style.pointerEvents = "auto";
 
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  // Layer di base: mappa stradale e satellite MapTiler
+  const MAPTILER_KEY = "UOMc8nBMTymR258JnYBR";
+
+  const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
     maxZoom: 19,
-  }).addTo(map);
+  });
+
+  const satelliteLayer = L.tileLayer("https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=" + MAPTILER_KEY, {
+    attribution: "&copy; <a href='https://www.maptiler.com/'>MapTiler</a> &copy; OpenStreetMap contributors",
+    maxZoom: 20,
+    tileSize: 512,
+    zoomOffset: -1
+  });
+
+  let activeBasemap = "osm";
+  osmLayer.addTo(map);
+
+  function setBasemap(type) {
+    if (type === activeBasemap) return;
+    if (map.hasLayer(osmLayer)) map.removeLayer(osmLayer);
+    if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+    if (type === "satellite") satelliteLayer.addTo(map);
+    else osmLayer.addTo(map);
+    activeBasemap = type;
+    document.getElementById("base-osm").classList.toggle("active", type === "osm");
+    document.getElementById("base-sat").classList.toggle("active", type === "satellite");
+    bringRilieviToFront();
+  }
 
   // ── Marker di rilievo ─────────────────────────────────────────────────────────
   const markerStyle = {
@@ -311,8 +412,16 @@
     pane:"rilieviPane"
   };
 
+  const markerById = {};
+  const markerRecords = [];
+
   MARKERS.forEach(function(m) {
-    const popup = L.popup({ maxWidth: 340 }).setContent(
+    const popup = L.popup({
+      maxWidth: 360,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: L.point(80, 80)
+    }).setContent(
       '<div class="popup-inner">' +
         '<div class="popup-row"><span class="popup-label">Data</span><span class="popup-val">' + m.date + '</span></div>' +
         '<div class="popup-row"><span class="popup-label">Altitudine</span><span class="popup-val">' + m.alt + ' m</span></div>' +
@@ -321,7 +430,9 @@
           'onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<span class=&quot;no-photo&quot;>Foto non disponibile</span>\'" /></div>' +
       '</div>'
     );
-    L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(popup).addTo(map);
+    const marker = L.circleMarker([m.lat, m.lng], markerStyle).bindPopup(popup).addTo(map);
+    markerById[String(m.id)] = marker;
+    markerRecords.push({ data: m, marker: marker });
   });
 
   function bringRilieviToFront() {
@@ -418,10 +529,77 @@
   function closeInfoOnOverlay(e) {
     if (e.target === document.getElementById("info-overlay")) toggleInfo();
   }
-  document.addEventListener("keydown", function(e){ if (e.key === "Escape" && infoVisible) toggleInfo(); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && infoVisible) toggleInfo();
+    if (e.key === "Escape") document.getElementById("photo-overlay").classList.remove("visible");
+  });
+
+
+
+  // ── Ricerca rilievi ───────────────────────────────────────────────────────────
+  function handleSearchKey(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      searchPoint();
+    }
+  }
+
+  function searchPoint() {
+    const input = document.getElementById("search-point");
+    const q = (input.value || "").trim().toLowerCase();
+    if (!q) return;
+
+    let result = null;
+    if (markerById[q]) {
+      result = markerRecords.find(function(r){ return String(r.data.id) === q; });
+    } else {
+      result = markerRecords.find(function(r){
+        return String(r.data.id).toLowerCase().includes(q) ||
+               String(r.data.date).toLowerCase().includes(q) ||
+               String(r.data.alt).toLowerCase().includes(q);
+      });
+    }
+
+    if (!result) {
+      input.style.borderColor = "#c0392b";
+      setTimeout(function(){ input.style.borderColor = "#d1c9bf"; }, 900);
+      return;
+    }
+
+    map.setView([result.data.lat, result.data.lng], Math.max(map.getZoom(), 16), { animate: true });
+    setTimeout(function(){ result.marker.openPopup(); bringRilieviToFront(); }, 350);
+  }
+
+  // ── Foto a schermo intero ─────────────────────────────────────────────────────
+  function openPhotoOverlay(src, alt) {
+    const overlay = document.getElementById("photo-overlay");
+    const img = document.getElementById("photo-modal-img");
+    img.src = src;
+    img.alt = alt || "Foto rilievo";
+    overlay.classList.add("visible");
+  }
+
+  function closePhotoOverlay(event) {
+    if (!event || event.target.id === "photo-overlay" || event.target.id === "photo-close") {
+      document.getElementById("photo-overlay").classList.remove("visible");
+    }
+  }
+
+  // ── Legenda ───────────────────────────────────────────────────────────────────
+  function buildLegend() {
+    const container = document.getElementById("legend-list");
+    if (!container) return;
+    GEOJSON_LAYERS.forEach(function(def) {
+      const item = document.createElement("div");
+      item.className = "legend-item";
+      item.innerHTML = '<span class="legend-swatch" style="background:' + def.color + '; opacity:' + Math.max(def.fill, 0.35) + '"></span><span>' + def.name + '</span>';
+      container.appendChild(item);
+    });
+  }
 
   // ── Avvio ─────────────────────────────────────────────────────────────────────
   buildLayerList();
+  buildLegend();
   updateBulkButtons();
   </script>
 </body>
