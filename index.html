@@ -3,7 +3,7 @@
 ATLANTE MICOLOGICO DI PESCOPENNATARO
 =========================================================
 
-Versione : 4.4.2
+Versione : 4.5.0
 Data      : 12/07/2026
 Stato     : Sviluppo / motore dati Atlante
 
@@ -64,7 +64,7 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Atlante Micologico di Pescopennataro - v4.4.2</title>
+  <title>Atlante Micologico di Pescopennataro - v4.5.0</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -610,7 +610,7 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
       .info-note { font-size: 12px; color: #6b6459; border-left: 3px solid #2d6a4f; padding-left: 10px; background: #f8f5f0; padding-top: 8px; padding-bottom: 8px; border-radius: 0 8px 8px 0; }
 
 
-    /* -- Versione 4.4.2: pannello Informazioni come pagina istituzionale -- */
+    /* -- Versione 4.5.0: pannello Informazioni come pagina istituzionale -- */
     #info-modal {
       width: min(760px, 94vw);
       max-width: 760px;
@@ -720,7 +720,7 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
     }
 
 
-    /* -- Versione 4.4.2: affinamenti richiesti -- */
+    /* -- Versione 4.5.0: affinamenti richiesti -- */
     .atlas-title-page {
       padding-top: 54px;
       padding-bottom: 22px;
@@ -769,6 +769,134 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
       #atlas-panel.atlas-view-small {
         --atlas-card-min: 100%;
         --atlas-thumb-height: 230px;
+      }
+    }
+
+
+    /* -- Versione 4.5.0: restyling modalita Per foto rilievo -- */
+    #atlas-panel {
+      min-height: 0;
+    }
+    #atlas-panel.atlas-mode-photo-active {
+      width: min(980px, 98vw);
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-title-page {
+      display: none;
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-tools {
+      padding: 16px 24px 14px;
+      border-bottom: 1px solid #e8e2da;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-tools-header {
+      margin-bottom: 12px;
+    }
+    #atlas-panel.atlas-mode-photo-active .consult-mode {
+      margin-bottom: 12px;
+    }
+    #atlas-panel.atlas-mode-photo-active .photo-mode-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+    #atlas-panel.atlas-mode-photo-active #atlas-status {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #6b6459;
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-grid {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 22px 28px 30px;
+      gap: 18px;
+      align-content: start;
+      grid-template-columns: repeat(auto-fill, minmax(var(--atlas-card-min), 1fr));
+      background: #fffdf9;
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-load-wrap {
+      flex-shrink: 0;
+      padding: 10px 24px 22px;
+      background: #fffdf9;
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-card {
+      border-radius: 12px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-thumb {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 4 / 3;
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #atlas-panel.atlas-mode-photo-active .atlas-meta {
+      display: none;
+    }
+    #atlas-panel.atlas-mode-photo-active.atlas-view-small { --atlas-card-min: 132px; }
+    #atlas-panel.atlas-mode-photo-active.atlas-view-medium { --atlas-card-min: 190px; }
+    #atlas-panel.atlas-mode-photo-active.atlas-view-large { --atlas-card-min: 270px; }
+    #atlas-panel.atlas-mode-photo-active.atlas-view-xlarge { --atlas-card-min: 390px; }
+    #atlas-panel.atlas-mode-photo-active .view-select {
+      min-width: 150px;
+      padding: 7px 9px;
+    }
+    #atlas-panel.atlas-mode-photo-active .photo-count {
+      padding: 6px 0;
+      font-size: 12px;
+      text-align: right;
+    }
+    #atlas-panel.atlas-mode-photo-active .photo-count strong {
+      display: inline;
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    @media (max-width: 760px) {
+      #atlas-panel.atlas-mode-photo-active {
+        width: 100vw;
+        height: 92dvh;
+      }
+      #atlas-panel.atlas-mode-photo-active .atlas-tools {
+        padding: 14px 16px 12px;
+      }
+      #atlas-panel.atlas-mode-photo-active .photo-mode-panel {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+      #atlas-panel.atlas-mode-photo-active .photo-count {
+        text-align: left;
+      }
+      #atlas-panel.atlas-mode-photo-active .atlas-grid {
+        padding: 16px 16px 24px;
+        gap: 12px;
+      }
+      #atlas-panel.atlas-mode-photo-active.atlas-view-small { --atlas-card-min: 118px; }
+      #atlas-panel.atlas-mode-photo-active.atlas-view-medium { --atlas-card-min: 165px; }
+      #atlas-panel.atlas-mode-photo-active.atlas-view-large { --atlas-card-min: 240px; }
+      #atlas-panel.atlas-mode-photo-active.atlas-view-xlarge { --atlas-card-min: 100%; }
+    }
+    @media (max-width: 430px) {
+      #atlas-panel.atlas-mode-photo-active.atlas-view-small .atlas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      #atlas-panel.atlas-mode-photo-active.atlas-view-medium .atlas-grid,
+      #atlas-panel.atlas-mode-photo-active.atlas-view-large .atlas-grid,
+      #atlas-panel.atlas-mode-photo-active.atlas-view-xlarge .atlas-grid {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -856,7 +984,7 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
         </div>
         <div id="layer-list"></div>
       </div>
-<div class="panel-footer">Atlante Micologico · v4.4.2 · 12/07/2026</div>
+<div class="panel-footer">Atlante Micologico · v4.5.0 · 12/07/2026</div>
     </div>
   </div>
 
@@ -923,7 +1051,7 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
         <div class="info-section">
           <h3>Versione</h3>
           <div class="info-version-box">
-            <p><strong>Web GIS - Atlante Micologico di Pescopennataro</strong><br>Versione 4.4.2 - Ultimo aggiornamento: 12/07/2026<br>&copy; 2026</p>
+            <p><strong>Web GIS - Atlante Micologico di Pescopennataro</strong><br>Versione 4.5.0 - Ultimo aggiornamento: 12/07/2026<br>&copy; 2026</p>
           </div>
         </div>
       </div>
@@ -1622,6 +1750,12 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
     const speciesBtn = document.getElementById("btn-consult-species");
     const photoBtn = document.getElementById("btn-consult-photo");
 
+    const atlasPanel = document.getElementById("atlas-panel");
+    if (atlasPanel) {
+      atlasPanel.classList.toggle("atlas-mode-photo-active", atlasConsultMode === "photo");
+      atlasPanel.classList.toggle("atlas-mode-species-active", atlasConsultMode === "species");
+    }
+
     if (speciesBlock) speciesBlock.classList.toggle("hidden", atlasConsultMode !== "species");
     if (photoBlock) photoBlock.classList.toggle("hidden", atlasConsultMode !== "photo");
     if (speciesBtn) speciesBtn.classList.toggle("active", atlasConsultMode === "species");
@@ -1717,7 +1851,7 @@ Le specie indicate sono provvisorie e servono solo per testare menu, filtri e zo
     grid.dataset.ready = "1";
     updateFilterStatus(atlasCurrentRecords.length);
     updateAtlasPhotoCount(atlasCurrentRecords.length);
-    setAtlasStatusText(atlasCurrentRecords.length + " fotografie disponibili.");
+    setAtlasStatusText("Galleria fotografica: " + atlasCurrentRecords.length + " fotografie disponibili.");
   }
 
   function showPhotosForSelectedSpecies() {
